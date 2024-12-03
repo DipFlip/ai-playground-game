@@ -23,9 +23,6 @@ class World:
     def try_interact(self):
         location = self.get_location_at(self.character.x, self.character.y)
         if location:
-            if isinstance(location, NPC):
-                location.interact()
-            else:
-                location.interact(self.character)
+            location.interact(self.character)
             return True
         return False 

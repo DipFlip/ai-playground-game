@@ -3,6 +3,7 @@ class Character:
         self.x = x
         self.y = y
         self.inventory = {}
+        self.emoji = "👤"
 
     def move(self, dx: int, dy: int):
         self.x += dx

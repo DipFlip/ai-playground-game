@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Game World</title>
     <style>
         .game-container {
@@ -16,24 +17,13 @@
         }
         .character, .location {
             position: absolute;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             width: 30px;
             height: 30px;
-            transform: translate(-50%, -50%);
-        }
-        .character {
-            background-color: red;
-            border-radius: 50%;
-            z-index: 2;
-        }
-        .location {
-            background-color: blue;
-            z-index: 1;
-        }
-        .location.lake {
-            background-color: lightblue;
-        }
-        .location.shop {
-            background-color: green;
         }
         .controls {
             display: flex;
@@ -67,11 +57,16 @@
 <body>
     <div class="game-container">
         <div class="world-grid">
-            <div class="character" id="character" style="left: {{ character.x * 40 + 200 }}px; top: {{ character.y * 40 + 200 }}px;"></div>
+            <div class="character" id="character" 
+                 style="left: {{ character.x * 40 + 200 }}px; top: {{ character.y * 40 + 200 }}px;">
+                {{ character.emoji }}
+            </div>
             {% for location in locations %}
                 <div class="location {{ location.__class__.__name__.lower() }}" 
                      style="left: {{ location.x * 40 + 200 }}px; top: {{ location.y * 40 + 200 }}px;"
-                     title="{{ location.__class__.__name__ }}"></div>
+                     title="{{ location.__class__.__name__ }}">
+                    {{ location.emoji }}
+                </div>
             {% endfor %}
         </div>
         
@@ -119,6 +114,7 @@
                 const character = document.getElementById('character');
                 character.style.left = (data.x * 40 + 200) + 'px';
                 character.style.top = (data.y * 40 + 200) + 'px';
+                character.innerHTML = data.emoji;
                 updateInventory(data);
             });
         }

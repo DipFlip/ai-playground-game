@@ -29,7 +29,8 @@ def move():
     return jsonify({
         'x': game_world.character.x,
         'y': game_world.character.y,
-        'inventory': game_world.character.inventory
+        'inventory': game_world.character.inventory,
+        'emoji': game_world.character.emoji
     })
 
 @app.route('/interact', methods=['POST'])

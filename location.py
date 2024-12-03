@@ -6,6 +6,11 @@ class Location(ABC):
         self.x = x
         self.y = y
 
+    @property
+    @abstractmethod
+    def emoji(self) -> str:
+        pass
+
     @abstractmethod
     def interact(self, character: Character) -> None:
         pass 
