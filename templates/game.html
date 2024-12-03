@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Game World</title>
+    <style>
+        .game-container {
+            display: flex;
+            margin: 20px;
+        }
+        .world-grid {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            border: 2px solid black;
+            margin-right: 20px;
+        }
+        .character, .location {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            transform: translate(-50%, -50%);
+        }
+        .character {
+            background-color: red;
+            border-radius: 50%;
+            z-index: 2;
+        }
+        .location {
+            background-color: blue;
+            z-index: 1;
+        }
+        .location.lake {
+            background-color: lightblue;
+        }
+        .location.shop {
+            background-color: green;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .movement-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            width: 150px;
+        }
+        .movement-controls button {
+            padding: 10px;
+        }
+        .movement-controls .spacer {
+            visibility: hidden;
+        }
+        .status {
+            margin-top: 20px;
+        }
+        .messages {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 150px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="world-grid">
+            <div class="character" id="character" style="left: {{ character.x * 40 + 200 }}px; top: {{ character.y * 40 + 200 }}px;"></div>
+            {% for location in locations %}
+                <div class="location {{ location.__class__.__name__.lower() }}" 
+                     style="left: {{ location.x * 40 + 200 }}px; top: {{ location.y * 40 + 200 }}px;"
+                     title="{{ location.__class__.__name__ }}"></div>
+            {% endfor %}
+        </div>
+        
+        <div class="controls">
+            <div class="movement-controls">
+                <div class="spacer"></div>
+                <button onclick="move('north')">North</button>
+                <div class="spacer"></div>
+                <button onclick="move('west')">West</button>
+                <button onclick="interact()">Interact</button>
+                <button onclick="move('east')">East</button>
+                <div class="spacer"></div>
+                <button onclick="move('south')">South</button>
+                <div class="spacer"></div>
+            </div>
+            
+            <div class="status">
+                <p>Fish: <span id="fish">{{ character.fish }}</span></p>
+                <p>Coins: <span id="coins">{{ character.coins }}</span></p>
+            </div>
+            
+            <div class="messages" id="messages">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function move(direction) {
+            fetch('/move', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ direction: direction }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const character = document.getElementById('character');
+                character.style.left = (data.x * 40 + 200) + 'px';
+                character.style.top = (data.y * 40 + 200) + 'px';
+                updateInventory(data);
+            });
+        }
+
+        function interact() {
+            fetch('/interact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({}),
+            })
+            .then(response => response.json())
+            .then(data => {
+                updateInventory(data);
+                if (data.message) {
+                    const messages = document.getElementById('messages');
+                    messages.innerHTML = data.messages.map(msg => `<p>${msg}</p>`).join('');
+                    messages.scrollTop = messages.scrollHeight;
+                }
+            });
+        }
+
+        function updateInventory(data) {
+            document.getElementById('fish').textContent = data.fish;
+            document.getElementById('coins').textContent = data.coins;
+        }
+    </script>
+</body>
+</html> 
