@@ -8,10 +8,10 @@ class World:
     def __init__(self):
         self.character = Character(0, 0)
         self.locations = [
-            Lake(2, 2),
-            Shop(5, 5),
-            NPC(1, 1),
-            NPC(4, 4)
+            Lake(2, -2),
+            Shop(-3, 2),
+            NPC(1, -1),
+            NPC(2, 1)
         ]
 
     def get_location_at(self, x: int, y: int):
