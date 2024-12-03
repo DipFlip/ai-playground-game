@@ -89,8 +89,12 @@
             </div>
             
             <div class="status">
-                <p>Fish: <span id="fish">{{ character.fish }}</span></p>
-                <p>Coins: <span id="coins">{{ character.coins }}</span></p>
+                <h3>Inventory:</h3>
+                <div id="inventory">
+                    {% for item, amount in character.inventory.items() %}
+                        <p>{{ item }}: <span id="item-{{ item }}">{{ amount }}</span></p>
+                    {% endfor %}
+                </div>
             </div>
             
             <div class="messages" id="messages">
@@ -139,8 +143,15 @@
         }
 
         function updateInventory(data) {
-            document.getElementById('fish').textContent = data.fish;
-            document.getElementById('coins').textContent = data.coins;
+            const inventoryDiv = document.getElementById('inventory');
+            inventoryDiv.innerHTML = '';
+            
+            // Create elements for each item in inventory
+            for (const [item, amount] of Object.entries(data.inventory)) {
+                const p = document.createElement('p');
+                p.innerHTML = `${item}: <span id="item-${item}">${amount}</span>`;
+                inventoryDiv.appendChild(p);
+            }
         }
     </script>
 </body>
