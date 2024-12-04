@@ -1,10 +1,23 @@
+from abc import ABC, abstractmethod
+
 class Character:
     def __init__(self, x: int, y: int):
         self.x = x
         self.y = y
         self.inventory = {}
-        self.emoji = "👤"
 
+    @property
+    @abstractmethod
+    def emoji(self) -> str:
+        return "🐱"
+
+    @abstractmethod
+    def interact(self, character: "Character") -> None:
+        pass 
+
+    def talk(self, text):
+        print(f"{self.emoji}: {text}")
+    
     def move(self, dx: int, dy: int):
         self.x += dx
         self.y += dy

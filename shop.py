@@ -1,7 +1,6 @@
-from location import Location
 from character import Character
 
-class Shop(Location):
+class Shop(Character):
     @property
     def emoji(self) -> str:
         return "👩‍🌾"
@@ -9,6 +8,6 @@ class Shop(Location):
     def interact(self, character: Character) -> None:
         if character.remove_item("fish"):
             character.add_item("coins")
-            print("You sold a fish for 1 coin!")
+            self.talk("Nice fish, take a coin for it!")
         else:
-            print("You need a fish to trade!") 
+            self.talk("Got anything to sell?") 

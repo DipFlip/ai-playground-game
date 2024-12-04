@@ -1,10 +1,11 @@
 from location import Location
 from character import Character
 
-class NPC(Location):
+class NPC(Character):
     @property
     def emoji(self) -> str:
-        return "🐮"  # Speech bubble emoji to represent an NPC you can talk to
-        
+        return "🐮"
+    
     def interact(self, character: Character) -> None:
-        print("Hey there, how do you do?") 
+        self.talk("Hey there, how do you do?") 
+        character.add_item('Milk')
