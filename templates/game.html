@@ -19,6 +19,9 @@
             background-position: 50% 50%;
             background-size: 400px 400px;
             overflow: hidden;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
         }
         .character, .location {
             position: absolute;
@@ -63,12 +66,12 @@
     <div class="game-container">
         <div class="world-grid">
             <div class="character" id="character" 
-                 style="left: {{ character.x * 20 + 200 }}px; top: {{ character.y * 20 + 200 }}px;">
+                 style="left: {{ character.x * 20 + 210 }}px; top: {{ character.y * 20 + 210 }}px;">
                 {{ character.emoji }}
             </div>
             {% for location in locations %}
                 <div class="location {{ location.__class__.__name__.lower() }}" 
-                     style="left: {{ location.x * 20 + 200 }}px; top: {{ location.y * 20 + 200 }}px;"
+                     style="left: {{ location.x * 20 + 210 }}px; top: {{ location.y * 20 + 210 }}px;"
                      title="{{ location.__class__.__name__ }}">
                     {{ location.emoji }}
                 </div>
@@ -148,8 +151,8 @@
             .then(response => response.json())
             .then(data => {
                 const character = document.getElementById('character');
-                character.style.left = (data.x * 20 + 200) + 'px';
-                character.style.top = (data.y * 20 + 200) + 'px';
+                character.style.left = (data.x * 20 + 210) + 'px';
+                character.style.top = (data.y * 20 + 210) + 'px';
                 character.innerHTML = data.emoji;
                 updateInventory(data);
             });
