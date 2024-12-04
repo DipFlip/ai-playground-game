@@ -73,13 +73,13 @@
         <div class="controls">
             <div class="movement-controls">
                 <div class="spacer"></div>
-                <button onclick="move('north')">North</button>
+                <button class="movement-button" data-direction="north">North</button>
                 <div class="spacer"></div>
-                <button onclick="move('west')">West</button>
-                <button onclick="interact()">Interact</button>
-                <button onclick="move('east')">East</button>
+                <button class="movement-button" data-direction="west">West</button>
+                <button onclick="interact(); this.blur()">Interact</button>
+                <button class="movement-button" data-direction="east">East</button>
                 <div class="spacer"></div>
-                <button onclick="move('south')">South</button>
+                <button class="movement-button" data-direction="south">South</button>
                 <div class="spacer"></div>
             </div>
             
@@ -101,6 +101,37 @@
     </div>
 
     <script>
+        // Add keyboard event listener
+        document.addEventListener('keydown', function(event) {
+            const keyMappings = {
+                'ArrowUp': 'north',
+                'ArrowDown': 'south',
+                'ArrowLeft': 'west',
+                'ArrowRight': 'east',
+                'w': 'north',
+                's': 'south',
+                'a': 'west',
+                'd': 'east',
+                ' ': 'interact'  // Space bar for interact
+            };
+            
+            const action = keyMappings[event.key];
+            if (action === 'interact') {
+                interact();
+            } else if (action) {
+                move(action);
+            }
+        });
+
+        // Add click listeners for movement buttons
+        document.querySelectorAll('.movement-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const direction = this.getAttribute('data-direction');
+                move(direction);
+                this.blur();  // Remove focus from the button after clicking
+            });
+        });
+
         function move(direction) {
             fetch('/move', {
                 method: 'POST',
