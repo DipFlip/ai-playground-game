@@ -1,0 +1,14 @@
+npc:
+  name: "Leo"
+  emoji: "🦁"
+  position: [2, 1]
+  sequence:
+    - type: talk
+      text: "I'm Leo the lion, king of the jungle!"
+    - type: talk
+      text: "You look hungry. Would you like some meat?"
+    - type: give
+      item: "Meat"
+      quantity: 1
+    - type: talk
+      text: "Enjoy your meal! Remember, sharing is caring!" 

@@ -5,15 +5,23 @@ from npc import NPC
 from typing import List
 from PIL import Image
 import os
+import glob
 
 class World:
     def __init__(self):
         self.character = Character(0, 0)
+        
+        # Load NPCs from YAML files
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        npc_path = os.path.join(base_path, 'npcs', '*.yaml')
+        npcs = []
+        for npc_file in glob.glob(npc_path):
+            npcs.append(NPC.from_yaml(npc_file))
+        
         self.locations = [
             Lake(-6, -7),
             Shop(5, -1),
-            NPC(1, 5, "🐮", ["Hi!", "I'm a cow, what's your name?"]),
-            NPC(2, 1, "🦁", ["I'm a lion", "What's your name?"])
+            *npcs  # Unpack NPCs into locations list
         ]
         
         # Load obstruction and map images

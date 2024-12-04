@@ -1,0 +1,14 @@
+npc:
+  name: "Bessie"
+  emoji: "🐮"
+  position: [1, 5]
+  sequence:
+    - type: talk
+      text: "Hi I'm Bessie the cow!"
+    - type: talk
+      text: "Want some fresh milk?"
+    - type: give
+      item: "Milk"
+      quantity: 1
+    - type: talk
+      text: "Hope you enjoy the milk! Come back tomorrow for more!" 
