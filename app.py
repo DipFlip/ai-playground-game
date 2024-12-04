@@ -1,5 +1,6 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_file
 from world import World
+import os
 
 app = Flask(__name__)
 
@@ -14,6 +15,11 @@ def home():
                          locations=game_world.locations,
                          messages=game_messages)
 
+@app.route('/graphics/<path:filename>')
+def serve_graphic(filename):
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    return send_file(os.path.join(base_path, 'graphics', filename))
+
 @app.route('/move', methods=['POST'])
 def move():
     direction = request.json['direction']
@@ -24,7 +30,13 @@ def move():
         'west': (-1, 0)
     }[direction]
     
-    game_world.character.move(dx, dy)
+    # Calculate new position
+    new_x = game_world.character.x + dx
+    new_y = game_world.character.y + dy
+    
+    # Check if movement is allowed
+    if game_world.can_move_to(new_x, new_y):
+        game_world.character.move(dx, dy)
     
     return jsonify({
         'x': game_world.character.x,
