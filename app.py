@@ -64,6 +64,12 @@ def interact():
     old_stdout = sys.stdout
     sys.stdout = output = io.StringIO()
     
+    # Check if we're providing an answer
+    if 'answer' in request.json:
+        npc = game_world.current_interaction
+        if npc:
+            npc.provide_response(request.json['answer'])
+    
     result = game_world.try_interact()
     
     # Get the printed message
@@ -76,11 +82,18 @@ def interact():
         if len(game_messages) > 5:
             game_messages.pop(0)
     
+    # Check if NPC is waiting for input
+    waiting_for_input = False
+    current_npc = game_world.current_interaction
+    if current_npc and current_npc.waiting_for_response:
+        waiting_for_input = True
+    
     return jsonify({
         'success': result,
         'message': message,
         'inventory': game_world.character.inventory,
-        'messages': game_messages
+        'messages': game_messages,
+        'waitingForInput': waiting_for_input
     })
 
 if __name__ == '__main__':

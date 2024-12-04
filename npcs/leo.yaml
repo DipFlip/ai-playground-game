@@ -5,10 +5,15 @@ npc:
   sequence:
     - type: talk
       text: "I'm Leo the lion, king of the jungle!"
+    - type: ask
+      text: "What's your name, brave adventurer?"
+      save: name
     - type: talk
-      text: "You look hungry. Would you like some meat?"
+      text: "Nice to meet you, {name}! You look hungry."
+    - type: talk
+      text: "Would you like some meat, {name}?"
     - type: give
       item: "Meat"
       quantity: 1
     - type: talk
-      text: "Enjoy your meal! Remember, sharing is caring!" 
+      text: "Enjoy your meal, {name}! Remember, sharing is caring!" 
