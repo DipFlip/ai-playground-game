@@ -1,16 +1,11 @@
 from abc import ABC, abstractmethod
 
 class Character:
-    def __init__(self, x: int, y: int):
+    def __init__(self, x: int, y: int, emoji: str='🐱'):
         self.x = x
         self.y = y
         self.inventory = {}
-
-    @property
-    @abstractmethod
-    def emoji(self) -> str:
-        return "🐱"
-
+        self.emoji = emoji
     @abstractmethod
     def interact(self, character: "Character") -> None:
         pass 

@@ -12,8 +12,8 @@ class World:
         self.locations = [
             Lake(-6, -7),
             Shop(5, -1),
-            NPC(1, 5),
-            NPC(2, 1)
+            NPC(1, 5, "🐮", ["Hi!", "I'm a cow, what's your name?"]),
+            NPC(2, 1, "🦁", ["I'm a lion, what's your name?"])
         ]
         
         # Load obstruction and map images
