@@ -13,7 +13,7 @@ class World:
             Lake(-6, -7),
             Shop(5, -1),
             NPC(1, 5, "🐮", ["Hi!", "I'm a cow, what's your name?"]),
-            NPC(2, 1, "🦁", ["I'm a lion, what's your name?"])
+            NPC(2, 1, "🦁", ["I'm a lion", "What's your name?"])
         ]
         
         # Load obstruction and map images
@@ -28,6 +28,7 @@ class World:
         self.map_width, self.map_height = self.obstruction_map.size
         self.center_x = self.map_width // 2
         self.center_y = self.map_height // 2
+        self.current_interaction = None
 
     def get_location_at(self, x: int, y: int):
         for location in self.locations:
@@ -38,9 +39,19 @@ class World:
     def try_interact(self):
         location = self.get_location_at(self.character.x, self.character.y)
         if location:
-            location.interact(self.character)
+            if isinstance(location, NPC):
+                if not location.is_talking:
+                    self.current_interaction = location
+                location.interact(self.character)
+                if not location.is_talking:
+                    self.current_interaction = None
+            else:
+                location.interact(self.character)
             return True
         return False
+
+    def is_interaction_active(self):
+        return self.current_interaction is not None
     
     def can_move_to(self, x: int, y: int) -> bool:
         # Convert world coordinates to image coordinates

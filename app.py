@@ -22,6 +22,16 @@ def serve_graphic(filename):
 
 @app.route('/move', methods=['POST'])
 def move():
+    # Don't allow movement during interaction
+    if game_world.is_interaction_active():
+        return jsonify({
+            'x': game_world.character.x,
+            'y': game_world.character.y,
+            'inventory': game_world.character.inventory,
+            'emoji': game_world.character.emoji,
+            'canMove': False
+        })
+
     direction = request.json['direction']
     dx, dy = {
         'north': (0, -1),
@@ -42,7 +52,8 @@ def move():
         'x': game_world.character.x,
         'y': game_world.character.y,
         'inventory': game_world.character.inventory,
-        'emoji': game_world.character.emoji
+        'emoji': game_world.character.emoji,
+        'canMove': True
     })
 
 @app.route('/interact', methods=['POST'])

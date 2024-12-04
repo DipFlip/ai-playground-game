@@ -140,6 +140,7 @@
             const action = keyMappings[event.key];
             if (action === 'interact') {
                 interact();
+                event.preventDefault(); // Prevent space from scrolling
             } else if (action) {
                 move(action);
             }
@@ -164,6 +165,9 @@
             })
             .then(response => response.json())
             .then(data => {
+                if (!data.canMove) {
+                    return; // Don't update position if movement is restricted
+                }
                 const character = document.getElementById('character');
                 character.style.left = (data.x * 40 + 420) + 'px';
                 character.style.top = (data.y * 40 + 420) + 'px';
