@@ -4,7 +4,7 @@ from character import Character
 class Shop(Location):
     @property
     def emoji(self) -> str:
-        return "🏪"
+        return "👩‍🌾"
         
     def interact(self, character: Character) -> None:
         if character.remove_item("fish"):

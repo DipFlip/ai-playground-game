@@ -10,9 +10,9 @@ class World:
     def __init__(self):
         self.character = Character(0, 0)
         self.locations = [
-            Lake(2, -2),
-            Shop(-3, 2),
-            NPC(1, -1),
+            Lake(-6, -7),
+            Shop(5, -1),
+            NPC(1, 5),
             NPC(2, 1)
         ]
         

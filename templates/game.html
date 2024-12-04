@@ -6,18 +6,19 @@
     <style>
         .game-container {
             display: flex;
+            flex-direction: column;
             margin: 20px;
         }
         .world-grid {
             position: relative;
-            width: 400px;
-            height: 400px;
+            width: 800px;
+            height: 800px;
             border: 2px solid black;
             margin-right: 20px;
             background-image: url('/graphics/map.png');
             background-repeat: no-repeat;
             background-position: 50% 50%;
-            background-size: 400px 400px;
+            background-size: 800px 800px;
             overflow: hidden;
             image-rendering: pixelated;
             image-rendering: -moz-crisp-edges;
@@ -53,58 +54,71 @@
         .status {
             margin-top: 20px;
         }
+        .game-row {
+            display: flex;
+            margin-bottom: 20px;
+        }
         .messages {
-            margin-top: 20px;
+            margin-top: 10px;
             border: 1px solid #ccc;
             padding: 10px;
             height: 150px;
             overflow-y: auto;
+            width: 800px;
         }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <div class="world-grid">
-            <div class="character" id="character" 
-                 style="left: {{ character.x * 20 + 210 }}px; top: {{ character.y * 20 + 210 }}px;">
-                {{ character.emoji }}
-            </div>
-            {% for location in locations %}
-                <div class="location {{ location.__class__.__name__.lower() }}" 
-                     style="left: {{ location.x * 20 + 210 }}px; top: {{ location.y * 20 + 210 }}px;"
-                     title="{{ location.__class__.__name__ }}">
-                    {{ location.emoji }}
+        <div class="game-row">
+            <div class="world-grid">
+                <div class="character" id="character" 
+                     style="left: {{ character.x * 40 + 420 }}px; top: {{ character.y * 40 + 420 }}px;">
+                    {{ character.emoji }}
                 </div>
-            {% endfor %}
-        </div>
-        
-        <div class="controls">
-            <div class="movement-controls">
-                <div class="spacer"></div>
-                <button class="movement-button" data-direction="north">North</button>
-                <div class="spacer"></div>
-                <button class="movement-button" data-direction="west">West</button>
-                <button onclick="interact(); this.blur()">Interact</button>
-                <button class="movement-button" data-direction="east">East</button>
-                <div class="spacer"></div>
-                <button class="movement-button" data-direction="south">South</button>
-                <div class="spacer"></div>
-            </div>
-            
-            <div class="status">
-                <h3>Inventory:</h3>
-                <div id="inventory">
-                    {% for item, amount in character.inventory.items() %}
-                        <p>{{ item }}: <span id="item-{{ item }}">{{ amount }}</span></p>
-                    {% endfor %}
-                </div>
-            </div>
-            
-            <div class="messages" id="messages">
-                {% for message in messages %}
-                    <p>{{ message }}</p>
+                {% for location in locations %}
+                    <div class="location {{ location.__class__.__name__.lower() }}" 
+                         style="left: {{ location.x * 40 + 420 }}px; top: {{ location.y * 40 + 420 }}px;"
+                         title="{{ location.__class__.__name__ }}">
+                        {{ location.emoji }}
+                    </div>
                 {% endfor %}
             </div>
+            
+            <div class="controls">
+                <div class="movement-controls">
+                    <div class="spacer"></div>
+                    <button class="movement-button" data-direction="north">North</button>
+                    <div class="spacer"></div>
+                    <button class="movement-button" data-direction="west">West</button>
+                    <button onclick="interact(); this.blur()">Interact</button>
+                    <button class="movement-button" data-direction="east">East</button>
+                    <div class="spacer"></div>
+                    <button class="movement-button" data-direction="south">South</button>
+                    <div class="spacer"></div>
+                </div>
+                
+                <div class="status">
+                    <h3>Position:</h3>
+                    <div id="position">
+                        X: <span id="pos-x">{{ character.x }}</span>, 
+                        Y: <span id="pos-y">{{ character.y }}</span>
+                    </div>
+                    
+                    <h3>Inventory:</h3>
+                    <div id="inventory">
+                        {% for item, amount in character.inventory.items() %}
+                            <p>{{ item }}: <span id="item-{{ item }}">{{ amount }}</span></p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="messages" id="messages">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
         </div>
     </div>
 
@@ -151,9 +165,14 @@
             .then(response => response.json())
             .then(data => {
                 const character = document.getElementById('character');
-                character.style.left = (data.x * 20 + 210) + 'px';
-                character.style.top = (data.y * 20 + 210) + 'px';
+                character.style.left = (data.x * 40 + 420) + 'px';
+                character.style.top = (data.y * 40 + 420) + 'px';
                 character.innerHTML = data.emoji;
+                
+                // Update position display
+                document.getElementById('pos-x').textContent = data.x;
+                document.getElementById('pos-y').textContent = data.y;
+                
                 updateInventory(data);
             });
         }
@@ -190,4 +209,5 @@
         }
     </script>
 </body>
+</html> 
 </html> 
