@@ -1,4 +1,3 @@
-from location import Location
 from character import Character
 from typing import List, Dict, Union, Optional
 import yaml
@@ -15,6 +14,8 @@ class NPCState:
     choices: List[Dict[str, Union[str, Dict[str, Union[str, int]]]]] = None
     next_state: str = None  # ID of the next state
     transitions: Dict[str, str] = None  # Maps responses/choices to next state IDs
+    success_text: str = None  # For trade success message
+    failure_text: str = None  # For trade failure message
 
 class NPC(Character):
     @classmethod

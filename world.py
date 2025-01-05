@@ -1,6 +1,4 @@
 from character import Character
-from lake import Lake
-from shop import Shop
 from npc import NPC
 from typing import List
 from PIL import Image
@@ -14,15 +12,9 @@ class World:
         # Load NPCs from YAML files
         base_path = os.path.dirname(os.path.abspath(__file__))
         npc_path = os.path.join(base_path, 'npcs', '*.yaml')
-        npcs = []
+        self.locations = []
         for npc_file in glob.glob(npc_path):
-            npcs.append(NPC.from_yaml(npc_file))
-        
-        self.locations = [
-            Lake(-6, -7),
-            Shop(5, -1),
-            *npcs  # Unpack NPCs into locations list
-        ]
+            self.locations.append(NPC.from_yaml(npc_file))
         
         # Load obstruction and map images
         base_path = os.path.dirname(os.path.abspath(__file__))
@@ -53,8 +45,6 @@ class World:
                 location.interact(self.character)
                 if not location.is_talking:
                     self.current_interaction = None
-            else:
-                location.interact(self.character)
             return True
         return False
 

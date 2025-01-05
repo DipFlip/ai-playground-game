@@ -1,0 +1,10 @@
+npc:
+  name: "Lake"
+  emoji: "🎣"
+  position: [-6, -7]
+  sequence:
+    - type: give
+      text: "You caught a fish!"
+      item:
+        name: "fish"
+        quantity: 1 

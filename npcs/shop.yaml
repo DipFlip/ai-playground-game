@@ -1,0 +1,16 @@
+npc:
+  name: "Shop"
+  emoji: "👩‍🌾"
+  position: [5, -1]
+  sequence:
+    - type: trade
+      text: "Got anything to sell?"
+      trade:
+        want:
+          name: "fish"
+          quantity: 1
+        offer:
+          name: "coins"
+          quantity: 1
+        success_text: "Nice fish, take a coin for it!"
+        failure_text: "Come back when you have a fish to sell!"
