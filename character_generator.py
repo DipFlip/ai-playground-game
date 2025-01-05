@@ -39,8 +39,8 @@ functions = [
                         "properties": {
                             "type": {
                                 "type": "string",
-                                "enum": ["talk", "ask", "give"],
-                                "description": "The type of action: talk (just dialogue), ask (requests input), give (gives item)"
+                                "enum": ["talk", "ask", "give", "trade"],
+                                "description": "The type of action: talk (just dialogue), ask (requests input), give (gives item), trade (exchanges items)"
                             },
                             "text": {
                                 "type": "string",
@@ -65,6 +65,53 @@ functions = [
                                     }
                                 },
                                 "required": ["name"]
+                            },
+                            "trade": {
+                                "type": "object",
+                                "description": "Required for 'trade' type only. Specifies the items to trade",
+                                "properties": {
+                                    "want": {
+                                        "type": "object",
+                                        "description": "The item the NPC wants from the player",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "description": "The name of the item wanted"
+                                            },
+                                            "quantity": {
+                                                "type": "integer",
+                                                "description": "Amount of the item wanted",
+                                                "default": 1
+                                            }
+                                        },
+                                        "required": ["name"]
+                                    },
+                                    "offer": {
+                                        "type": "object",
+                                        "description": "The item the NPC offers in return",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "description": "The name of the item offered"
+                                            },
+                                            "quantity": {
+                                                "type": "integer",
+                                                "description": "Amount of the item offered",
+                                                "default": 1
+                                            }
+                                        },
+                                        "required": ["name"]
+                                    },
+                                    "success_text": {
+                                        "type": "string",
+                                        "description": "Text to show when trade is successful"
+                                    },
+                                    "failure_text": {
+                                        "type": "string",
+                                        "description": "Text to show when player doesn't have enough items"
+                                    }
+                                },
+                                "required": ["want", "offer", "success_text", "failure_text"]
                             }
                         },
                         "required": ["type", "text"]

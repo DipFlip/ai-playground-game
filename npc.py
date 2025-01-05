@@ -11,6 +11,7 @@ class NPCAction:
     text: str = None
     user_input: str = None  # Field to store response variable name
     item: Dict[str, Union[str, int]] = None  # Object containing name and quantity
+    trade: Dict[str, Union[Dict[str, Union[str, int]], str]] = None  # Trade configuration
 
 class NPC(Character):
     @classmethod
@@ -75,7 +76,34 @@ class NPC(Character):
                 quantity = action.item.get('quantity', 1)
                 for _ in range(quantity):
                     character.add_item(action.item['name'])
+                if action.text:
+                    self.talk(f"{self.name}: {action.text}")
         elif action.type == "ask":
             self.talk(f"{self.name}: {action.text}")
             self.waiting_for_response = True
             self.current_question = action
+        elif action.type == "trade":
+            if action.trade:
+                want = action.trade['want']
+                offer = action.trade['offer']
+                want_quantity = want.get('quantity', 1)
+                
+                # Check if player has enough items
+                has_items = character.has_item(want['name'], want_quantity)
+                
+                if has_items:
+                    # Remove items from player
+                    for _ in range(want_quantity):
+                        character.remove_item(want['name'])
+                    
+                    # Give items to player
+                    offer_quantity = offer.get('quantity', 1)
+                    for _ in range(offer_quantity):
+                        character.add_item(offer['name'])
+                    
+                    self.talk(f"{self.name}: {action.trade['success_text']}")
+                else:
+                    self.talk(f"{self.name}: {action.trade['failure_text']}")
+                    
+                if action.text:
+                    self.talk(f"{self.name}: {action.text}")
