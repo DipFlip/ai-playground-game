@@ -9,10 +9,13 @@ npc:
       text: "Want to trade?"
       choices:
         - choice_text: "Yes"
-          type: give
-          item:
-            name: "Meat"
-            quantity: 2
+          sequence:
+            - type: give
+              text: "Here's some meat for you!"
+              item:
+                name: "Meat"
+                quantity: 2
         - choice_text: "No"
-          action: talk
-          text: "Alright, come back if you change your mind!"
+          sequence:
+            - type: talk
+              text: "Alright, come back if you change your mind!"

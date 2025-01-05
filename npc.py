@@ -30,29 +30,54 @@ class NPC(Character):
         # Convert YAML sequence to state machine
         states = {}
         initial_state = None
-        
-        for i, action in enumerate(data['sequence']):
-            state_id = f"state_{i}"
-            next_state = f"state_{i + 1}" if i < len(data['sequence']) - 1 else "end"
-            
-            # Create state transitions based on action type
-            transitions = {}
-            if action['type'] == "Choice":
-                for choice in action['choices']:
-                    transitions[choice['choice_text']] = next_state
-            elif action['type'] == "ask":
-                transitions["*"] = next_state  # Any response transitions to next state
-            else:
-                transitions = None  # Auto-transition to next state
-            
-            states[state_id] = NPCState(
-                **action,
-                next_state=next_state,
-                transitions=transitions
-            )
-            
-            if i == 0:
-                initial_state = state_id
+        state_counter = 0
+
+        def process_sequence(sequence, parent_state=None):
+            nonlocal state_counter, initial_state
+            sequence_start = None
+            last_state = None
+
+            for action in sequence:
+                state_id = f"state_{state_counter}"
+                state_counter += 1
+
+                if sequence_start is None:
+                    sequence_start = state_id
+                
+                # Create state transitions based on action type
+                transitions = {}
+                next_state = None
+
+                if action['type'] == "Choice":
+                    # For each choice, process its sequence and link to it
+                    choice_transitions = {}
+                    for choice in action['choices']:
+                        if 'sequence' in choice:
+                            # Process the choice's sequence and get its start state
+                            choice_start = process_sequence(choice['sequence'], state_id)
+                            choice_transitions[choice['choice_text']] = choice_start
+                    transitions = choice_transitions
+                elif action['type'] == "ask":
+                    next_state = f"state_{state_counter}"  # Next state will be the next one we create
+                    transitions["*"] = next_state
+                
+                states[state_id] = NPCState(
+                    **action,
+                    next_state=next_state,
+                    transitions=transitions
+                )
+
+                if last_state and states[last_state].next_state is None:
+                    states[last_state].next_state = state_id
+
+                if initial_state is None:
+                    initial_state = state_id
+
+                last_state = state_id
+
+            return sequence_start
+
+        process_sequence(data['sequence'])
         
         npc = cls(x, y, data['emoji'], states, initial_state, data['name'])
         npc.needs_position = position is None
@@ -104,22 +129,7 @@ class NPC(Character):
         elif current_state.type == "Choice":
             # Check if response matches any of the choices
             if current_state.transitions and response in current_state.transitions:
-                # Find the choice configuration
-                choice = next(c for c in current_state.choices if c['choice_text'] == response)
-                
-                # Process the choice action
-                if choice.get('type') == 'give' and choice.get('item') and character:
-                    quantity = choice['item'].get('quantity', 1)
-                    for _ in range(quantity):
-                        character.add_item(choice['item']['name'])
-                    if choice.get('text'):
-                        formatted_text = self.format_text(choice['text'])
-                        self.talk(f"{self.name}: {formatted_text}")
-                elif choice.get('action') == 'talk' and choice.get('text'):
-                    formatted_text = self.format_text(choice['text'])
-                    self.talk(f"{self.name}: {formatted_text}")
-                
-                # Transition to next state
+                # Transition to next state based on choice
                 self.current_state_id = current_state.transitions[response]
 
         self.waiting_for_response = False

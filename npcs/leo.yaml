@@ -20,7 +20,7 @@ npc:
             quantity: 1
           text: "Here's some fresh meat for you!"
         - choice_text: "No, thanks"
-          action: talk
+          type: talk
           text: "Alright, maybe next time then!"
     - type: talk
       text: "Remember, sharing is caring, {name}! Come back anytime." 
