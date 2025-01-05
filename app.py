@@ -20,6 +20,11 @@ def serve_graphic(filename):
     base_path = os.path.dirname(os.path.abspath(__file__))
     return send_file(os.path.join(base_path, 'graphics', filename))
 
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    return send_file(os.path.join(base_path, 'static', filename))
+
 @app.route('/move', methods=['POST'])
 def move():
     # Don't allow movement during interaction
