@@ -24,5 +24,6 @@ A simple 2D game world built with Python and Flask where a character can move ar
 
 1. Clone the repository
 2. Install the dependencies using `pip install -r requirements.txt`
-3. Run the server using `python app.py`
-4. Open the game in your browser at `http://localhost:5000`
+3. Edit `template.env` with your OpenAI API key and save as `.env`
+4. Run the server using `python app.py`
+5. Open the game in your browser at `http://localhost:5000`
