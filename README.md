@@ -22,4 +22,7 @@ A simple 2D game world built with Python and Flask where a character can move ar
 
 ## Installation
 
-1. Clone the repository: 
+1. Clone the repository
+2. Install the dependencies using `pip install -r requirements.txt`
+3. Run the server using `python app.py`
+4. Open the game in your browser at `http://localhost:5000`
