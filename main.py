@@ -11,7 +11,7 @@ def main():
     world.character.move(3, 3)  # Move to (5, 5)
     world.try_interact()  # Sells the fish for a coin
     
-    print(f"Character has {world.character.fish} fish and {world.character.coins} coins")
+    # print(f"Character has {world.character.fish} fish and {world.character.coins} coins")
 
 if __name__ == "__main__":
     main() 
