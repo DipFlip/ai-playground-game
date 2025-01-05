@@ -84,16 +84,22 @@ def interact():
     sys.stdout = old_stdout
     message = output.getvalue().strip()
     
+    # Get current NPC before updating messages
+    current_npc = game_world.current_interaction
+    
     if message:
         game_messages.append(message)
         # Keep only last 5 messages
         if len(game_messages) > 5:
             game_messages.pop(0)
     
+    # Clear messages if interaction is completely over
+    if not current_npc or not current_npc.is_talking:
+        game_messages.clear()
+    
     # Check if NPC is waiting for input
     waiting_for_input = False
     choices = []
-    current_npc = game_world.current_interaction
     if current_npc and current_npc.waiting_for_response:
         waiting_for_input = True
         current_state = current_npc.get_current_state()
@@ -106,7 +112,8 @@ def interact():
         'inventory': game_world.character.inventory,
         'messages': game_messages,
         'waitingForInput': waiting_for_input,
-        'choices': choices
+        'choices': choices,
+        'is_talking': current_npc.is_talking if current_npc else False
     })
 
 @app.route('/create_npc', methods=['POST'])

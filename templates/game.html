@@ -20,6 +20,24 @@
                         {{ location.emoji }}
                     </div>
                 {% endfor %}
+                
+                <div class="conversation-window" id="conversation-window">
+                    <div class="messages" id="messages">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div id="input-container">
+                        <div id="choices-container" style="display: none;">
+                            <!-- Choices will be dynamically added here -->
+                        </div>
+                        <div class="input-row">
+                            <input type="text" id="player-input" placeholder="Type your answer here...">
+                            <button id="submit-answer">Submit</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <div class="controls">
@@ -50,20 +68,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="messages" id="messages">
-            {% for message in messages %}
-                <p>{{ message }}</p>
-            {% endfor %}
-        </div>
-
-        <div id="input-container">
-            <div id="choices-container" style="display: none;">
-                <!-- Choices will be dynamically added here -->
-            </div>
-            <input type="text" id="player-input" placeholder="Type your answer here...">
-            <button id="submit-answer">Submit</button>
         </div>
 
         <div id="npc-creator">
@@ -168,21 +172,27 @@
             .then(data => {
                 console.log('Interact response:', data);  // Debug log
                 
-                // Update messages if we have any
-                if (data && data.messages) {
-                    updateMessages(data.messages);
-                }
-                
-                // Always try to update inventory
-                updateInventory(data);
-                
-                // Show input container if waiting for input
+                const conversationWindow = document.getElementById('conversation-window');
                 const inputContainer = document.getElementById('input-container');
                 const choicesContainer = document.getElementById('choices-container');
                 const textInput = document.getElementById('player-input');
                 const submitButton = document.getElementById('submit-answer');
                 const waitingForInput = data && data.waitingForInput;
-                console.log('Waiting for input:', waitingForInput);  // Debug log
+                
+                // Update messages if we have any
+                if (data && data.messages && data.messages.length > 0) {
+                    updateMessages(data.messages);
+                    conversationWindow.classList.add('visible');
+                } else {
+                    // If no messages and not talking, close the window
+                    if (!data.is_talking) {
+                        conversationWindow.classList.remove('visible');
+                        document.getElementById('messages').innerHTML = '';
+                    }
+                }
+                
+                // Always try to update inventory
+                updateInventory(data);
                 
                 if (waitingForInput) {
                     inputContainer.style.display = 'block';
@@ -215,6 +225,10 @@
                 } else {
                     inputContainer.style.display = 'none';
                     inputContainer.classList.remove('visible');
+                    if (!data.is_talking) {
+                        conversationWindow.classList.remove('visible');
+                        document.getElementById('messages').innerHTML = '';
+                    }
                 }
             })
             .catch(error => {
@@ -241,8 +255,13 @@
             const messagesDiv = document.getElementById('messages');
             // Check if we have valid messages array
             const validMessages = Array.isArray(messages) ? messages : [];
-            messagesDiv.innerHTML = validMessages.map(msg => `<p>${msg}</p>`).join('');
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;  // Auto-scroll to bottom
+            
+            if (validMessages.length > 0) {
+                messagesDiv.innerHTML = validMessages.map(msg => `<p>${msg}</p>`).join('');
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;  // Auto-scroll to bottom
+            } else {
+                messagesDiv.innerHTML = '';
+            }
         }
 
         function submitAnswer(choice = null) {
@@ -277,6 +296,7 @@
                 const choicesContainer = document.getElementById('choices-container');
                 const textInput = document.getElementById('player-input');
                 const submitButton = document.getElementById('submit-answer');
+                const conversationWindow = document.getElementById('conversation-window');
                 
                 if (!choice) {
                     textInput.value = '';  // Clear input if it was a text input
@@ -286,6 +306,7 @@
                 console.log('Waiting for input after submit:', waitingForInput);  // Debug log
                 
                 if (waitingForInput) {
+                    conversationWindow.classList.add('visible');
                     inputContainer.style.display = 'block';
                     inputContainer.classList.add('visible');
                     
@@ -317,6 +338,13 @@
                 } else {
                     inputContainer.style.display = 'none';
                     inputContainer.classList.remove('visible');
+                    // Close the window if not talking anymore
+                    if (!data.is_talking) {
+                        setTimeout(() => {
+                            conversationWindow.classList.remove('visible');
+                            document.getElementById('messages').innerHTML = '';
+                        }, 2000); // Give 2 seconds to read the last message
+                    }
                 }
             })
             .catch(error => {

@@ -64,54 +64,95 @@
 }
 
 .messages {
-    margin-top: 10px;
-    border: 1px solid #ccc;
     padding: 10px;
-    height: 150px;
+    height: 120px;
     overflow-y: auto;
-    width: 800px;
+    margin-bottom: 10px;
+}
+
+.conversation-window {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    border: 8px solid #8B4513;
+    border-image: repeating-linear-gradient(45deg, #8B4513, #A0522D 10px, #8B4513 10px, #A0522D 20px) 8;
+    margin: 20px;
+    padding: 15px;
+    display: none;
+    max-height: 250px;
+    border-radius: 4px;
+}
+
+.conversation-window.visible {
+    display: block;
 }
 
 #input-container {
-    position: fixed;
-    bottom: 100px;
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;
     display: none;
-    background: #333;
-    color: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    z-index: 1000;
-    min-width: 300px;
+    background: transparent;
+    padding: 10px 0 0 0;
+    box-shadow: none;
+    min-width: auto;
+    transform: none;
+    left: auto;
+    bottom: auto;
+}
+
+#input-container.visible {
+    display: block;
+}
+
+.input-row {
+    display: flex;
+    gap: 10px;
 }
 
 #player-input {
+    flex: 1;
     padding: 8px 12px;
-    margin-right: 10px;
-    border: none;
+    border: 1px solid #8B4513;
     border-radius: 4px;
     font-size: 16px;
-    width: 200px;
 }
 
 #submit-answer {
     padding: 8px 15px;
-    background: #4CAF50;
+    background: #8B4513;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
+    transition: background-color 0.2s;
 }
 
 #submit-answer:hover {
-    background: #45a049;
+    background: #A0522D;
 }
 
-#input-container.visible {
-    display: block !important;
+#choices-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.choice-button {
+    padding: 8px 15px;
+    background: #8B4513;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
+
+.choice-button:hover {
+    background: #A0522D;
 }
 
 /* NPC Creator Styles */
@@ -187,27 +228,5 @@
 }
 
 #create-npc:hover {
-    background: #45a049;
-}
-
-#choices-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.choice-button {
-    padding: 8px 15px;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.2s;
-}
-
-.choice-button:hover {
     background: #45a049;
 } 
