@@ -1,6 +1,9 @@
 from flask import Flask, render_template, jsonify, request, send_file
 from world import World
 import os
+from character_generator import create_character
+import yaml
+import uuid
 
 app = Flask(__name__)
 
@@ -100,6 +103,39 @@ def interact():
         'messages': game_messages,
         'waitingForInput': waiting_for_input
     })
+
+@app.route('/create_npc', methods=['POST'])
+def create_npc():
+    try:
+        description = request.json['description']
+        
+        # Generate NPC YAML using character_generator
+        yaml_content = create_character(description)
+        
+        if not yaml_content:
+            return jsonify({'success': False, 'error': 'Failed to generate NPC'})
+        
+        # Create a unique filename for the NPC
+        npc_filename = f"npc_{uuid.uuid4().hex[:8]}.yaml"
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        npc_dir = os.path.join(base_path, 'npcs')
+        
+        # Create npcs directory if it doesn't exist
+        os.makedirs(npc_dir, exist_ok=True)
+        
+        # Save the YAML file
+        npc_path = os.path.join(npc_dir, npc_filename)
+        with open(npc_path, 'w', encoding='utf-8') as f:
+            f.write(yaml_content)
+        
+        # Reload the world to include the new NPC
+        global game_world
+        game_world = World()
+        
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 if __name__ == '__main__':
     app.run(debug=True) 

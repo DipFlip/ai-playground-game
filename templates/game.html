@@ -62,6 +62,18 @@
             <input type="text" id="player-input" placeholder="Type your answer here...">
             <button id="submit-answer">Submit</button>
         </div>
+
+        <div id="npc-creator">
+            <button id="add-npc-button">Add NPC</button>
+            <div id="npc-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>Create New NPC</h2>
+                    <textarea id="npc-description" placeholder="Describe the NPC you want to create..."></textarea>
+                    <button id="create-npc">Create NPC</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -259,6 +271,57 @@
                 submitAnswer();
             }
         });
+
+        // Add NPC Modal functionality
+        const modal = document.getElementById('npc-modal');
+        const addNpcBtn = document.getElementById('add-npc-button');
+        const closeBtn = document.getElementsByClassName('close')[0];
+        const createNpcBtn = document.getElementById('create-npc');
+
+        addNpcBtn.onclick = function() {
+            modal.style.display = 'block';
+        }
+
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        createNpcBtn.onclick = function() {
+            const description = document.getElementById('npc-description').value;
+            if (!description.trim()) {
+                alert('Please provide a description for the NPC');
+                return;
+            }
+
+            fetch('/create_npc', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ description: description })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('NPC created successfully!');
+                    location.reload(); // Reload to show the new NPC
+                } else {
+                    alert('Failed to create NPC: ' + data.error);
+                }
+                modal.style.display = 'none';
+                document.getElementById('npc-description').value = '';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error creating NPC');
+            });
+        }
     </script>
 </body>
 </html> 

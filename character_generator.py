@@ -2,7 +2,6 @@ import json
 import yaml
 from openai import OpenAI
 import dotenv
-
 dotenv.load_dotenv()
 
 # Initialize OpenAI client
