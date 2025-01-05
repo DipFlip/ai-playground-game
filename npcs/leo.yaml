@@ -10,12 +10,17 @@ npc:
       user_input: name
     - type: talk
       text: "Nice to meet you, {name}! You look hungry."
-    - type: talk
+    - type: Choice
       text: "Would you like some meat, {name}?"
-    - type: give
-      text: "Here's some fresh meat for you!"
-      item:
-        name: "Meat"
-        quantity: 1
+      choices:
+        - choice_text: "Yes, please!"
+          type: give
+          item:
+            name: "Meat"
+            quantity: 1
+          text: "Here's some fresh meat for you!"
+        - choice_text: "No, thanks"
+          action: talk
+          text: "Alright, maybe next time then!"
     - type: talk
-      text: "Enjoy your meal, {name}! Remember, sharing is caring!" 
+      text: "Remember, sharing is caring, {name}! Come back anytime." 

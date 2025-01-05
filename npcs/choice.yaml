@@ -1,0 +1,18 @@
+npc:
+  name: "Choice example"
+  emoji: "🎒"
+  position: [1, 5]
+  sequence:
+    - type: talk
+      text: "Welcome to Marco's Trading Post! I specialize in magical items."
+    - type: Choice
+      text: "Want to trade?"
+      choices:
+        - choice_text: "Yes"
+          type: give
+          item:
+            name: "Meat"
+            quantity: 2
+        - choice_text: "No"
+          action: talk
+          text: "Alright, come back if you change your mind!"

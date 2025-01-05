@@ -38,8 +38,8 @@ functions = [
                         "properties": {
                             "type": {
                                 "type": "string",
-                                "enum": ["talk", "ask", "give", "trade"],
-                                "description": "The type of action: talk (just dialogue), ask (requests input), give (gives item), trade (exchanges items)"
+                                "enum": ["talk", "ask", "give", "trade", "Choice"],
+                                "description": "The type of action: talk (just dialogue), ask (requests input), give (gives item), trade (exchanges items), Choice (presents multiple options)"
                             },
                             "text": {
                                 "type": "string",
@@ -111,6 +111,45 @@ functions = [
                                     }
                                 },
                                 "required": ["want", "offer", "success_text", "failure_text"]
+                            },
+                            "choices": {
+                                "type": "array",
+                                "description": "Required for 'Choice' type only. List of choices the player can select from",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "choice_text": {
+                                            "type": "string",
+                                            "description": "The text shown to the player for this choice"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["give", "talk"],
+                                            "description": "The type of action to take when this choice is selected"
+                                        },
+                                        "text": {
+                                            "type": "string",
+                                            "description": "For talk actions, the text to say when this choice is selected"
+                                        },
+                                        "item": {
+                                            "type": "object",
+                                            "description": "For give actions, the item to give when this choice is selected",
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "description": "The name of the item to give"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "description": "Amount of the item to give",
+                                                    "default": 1
+                                                }
+                                            },
+                                            "required": ["name"]
+                                        }
+                                    },
+                                    "required": ["choice_text"]
+                                }
                             }
                         },
                         "required": ["type", "text"]

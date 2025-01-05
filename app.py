@@ -76,7 +76,7 @@ def interact():
     if 'answer' in request.json:
         npc = game_world.current_interaction
         if npc:
-            npc.provide_response(request.json['answer'])
+            npc.provide_response(request.json['answer'], game_world.character)
     
     result = game_world.try_interact()
     
@@ -92,16 +92,21 @@ def interact():
     
     # Check if NPC is waiting for input
     waiting_for_input = False
+    choices = []
     current_npc = game_world.current_interaction
     if current_npc and current_npc.waiting_for_response:
         waiting_for_input = True
+        current_state = current_npc.get_current_state()
+        if current_state and current_state.type == "Choice" and current_state.choices:
+            choices = [choice['choice_text'] for choice in current_state.choices]
     
     return jsonify({
         'success': result,
         'message': message,
         'inventory': game_world.character.inventory,
         'messages': game_messages,
-        'waitingForInput': waiting_for_input
+        'waitingForInput': waiting_for_input,
+        'choices': choices
     })
 
 @app.route('/create_npc', methods=['POST'])

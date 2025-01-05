@@ -59,6 +59,9 @@
         </div>
 
         <div id="input-container">
+            <div id="choices-container" style="display: none;">
+                <!-- Choices will be dynamically added here -->
+            </div>
             <input type="text" id="player-input" placeholder="Type your answer here...">
             <button id="submit-answer">Submit</button>
         </div>
@@ -175,15 +178,40 @@
                 
                 // Show input container if waiting for input
                 const inputContainer = document.getElementById('input-container');
+                const choicesContainer = document.getElementById('choices-container');
+                const textInput = document.getElementById('player-input');
+                const submitButton = document.getElementById('submit-answer');
                 const waitingForInput = data && data.waitingForInput;
                 console.log('Waiting for input:', waitingForInput);  // Debug log
                 
                 if (waitingForInput) {
                     inputContainer.style.display = 'block';
                     inputContainer.classList.add('visible');
-                    const input = document.getElementById('player-input');
-                    input.value = '';  // Clear any previous input
-                    input.focus();
+                    
+                    // Handle choices if present
+                    if (data.choices && data.choices.length > 0) {
+                        choicesContainer.style.display = 'block';
+                        textInput.style.display = 'none';
+                        submitButton.style.display = 'none';
+                        
+                        // Clear previous choices
+                        choicesContainer.innerHTML = '';
+                        
+                        // Add choice buttons
+                        data.choices.forEach(choice => {
+                            const button = document.createElement('button');
+                            button.textContent = choice;
+                            button.className = 'choice-button';
+                            button.onclick = () => submitAnswer(choice);
+                            choicesContainer.appendChild(button);
+                        });
+                    } else {
+                        choicesContainer.style.display = 'none';
+                        textInput.style.display = 'block';
+                        submitButton.style.display = 'block';
+                        textInput.value = '';  // Clear any previous input
+                        textInput.focus();
+                    }
                 } else {
                     inputContainer.style.display = 'none';
                     inputContainer.classList.remove('visible');
@@ -217,9 +245,9 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;  // Auto-scroll to bottom
         }
 
-        function submitAnswer() {
+        function submitAnswer(choice = null) {
             const input = document.getElementById('player-input');
-            const answer = input.value.trim();  // Trim whitespace
+            const answer = choice || input.value.trim();  // Use choice if provided, otherwise use input value
             
             if (!answer) return;  // Don't submit empty answers
             
@@ -246,7 +274,13 @@
                 
                 // Handle input container
                 const inputContainer = document.getElementById('input-container');
-                input.value = '';  // Clear input
+                const choicesContainer = document.getElementById('choices-container');
+                const textInput = document.getElementById('player-input');
+                const submitButton = document.getElementById('submit-answer');
+                
+                if (!choice) {
+                    textInput.value = '';  // Clear input if it was a text input
+                }
                 
                 const waitingForInput = data && data.waitingForInput;
                 console.log('Waiting for input after submit:', waitingForInput);  // Debug log
@@ -254,7 +288,32 @@
                 if (waitingForInput) {
                     inputContainer.style.display = 'block';
                     inputContainer.classList.add('visible');
-                    input.focus();
+                    
+                    // Handle choices if present
+                    if (data.choices && data.choices.length > 0) {
+                        choicesContainer.style.display = 'block';
+                        textInput.style.display = 'none';
+                        submitButton.style.display = 'none';
+                        
+                        // Clear previous choices
+                        choicesContainer.innerHTML = '';
+                        
+                        // Add choice buttons
+                        data.choices.forEach(choice => {
+                            const button = document.createElement('button');
+                            button.textContent = choice;
+                            button.className = 'choice-button';
+                            button.onclick = () => submitAnswer(choice);
+                            choicesContainer.appendChild(button);
+                        });
+                    } else {
+                        choicesContainer.style.display = 'none';
+                        textInput.style.display = 'block';
+                        submitButton.style.display = 'block';
+                        if (!choice) {
+                            textInput.focus();
+                        }
+                    }
                 } else {
                     inputContainer.style.display = 'none';
                     inputContainer.classList.remove('visible');

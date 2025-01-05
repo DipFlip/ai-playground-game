@@ -188,4 +188,26 @@
 
 #create-npc:hover {
     background: #45a049;
+}
+
+#choices-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.choice-button {
+    padding: 8px 15px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
+
+.choice-button:hover {
+    background: #45a049;
 } 
