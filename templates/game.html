@@ -86,8 +86,10 @@
     <script>
         // Add keyboard event listener
         document.addEventListener('keydown', function(event) {
-            // Ignore keyboard controls if we're typing in the input field
-            if (document.activeElement.id === 'player-input') {
+            // Ignore keyboard controls if we're typing in the input field or the NPC modal is open
+            if (document.activeElement.id === 'player-input' || 
+                document.activeElement.id === 'npc-description' ||
+                document.getElementById('npc-modal').style.display === 'block') {
                 return;
             }
 
@@ -367,6 +369,7 @@
 
         addNpcBtn.onclick = function() {
             modal.style.display = 'block';
+            document.getElementById('npc-description').focus();
         }
 
         closeBtn.onclick = function() {

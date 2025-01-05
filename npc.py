@@ -23,7 +23,9 @@ class NPC(Character):
         with open(yaml_path, 'r') as f:
             data = yaml.safe_load(f)['npc']
         
-        x, y = data['position']
+        # Get position from data or let the world decide later
+        position = data.get('position', None)
+        x, y = position if position else (0, 0)
         
         # Convert YAML sequence to state machine
         states = {}
@@ -52,7 +54,9 @@ class NPC(Character):
             if i == 0:
                 initial_state = state_id
         
-        return cls(x, y, data['emoji'], states, initial_state, data['name'])
+        npc = cls(x, y, data['emoji'], states, initial_state, data['name'])
+        npc.needs_position = position is None
+        return npc
 
     def __init__(self, x: int, y: int, emoji: str='', states: Dict[str, NPCState] = None, 
                  initial_state: str = None, name: str = "Unknown"):
@@ -63,6 +67,7 @@ class NPC(Character):
         self.name = name
         self.responses = {}  # Store player responses
         self.waiting_for_response = False
+        self.needs_position = False  # Flag to indicate if we need a position from the world
 
     def get_current_state(self) -> Optional[NPCState]:
         if self.current_state_id == "end":

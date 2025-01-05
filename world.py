@@ -4,19 +4,14 @@ from typing import List
 from PIL import Image
 import os
 import glob
+import random
 
 class World:
     def __init__(self):
         self.character = Character(0, 0)
+        self.current_interaction = None
         
-        # Load NPCs from YAML files
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        npc_path = os.path.join(base_path, 'npcs', '*.yaml')
-        self.locations = []
-        for npc_file in glob.glob(npc_path):
-            self.locations.append(NPC.from_yaml(npc_file))
-        
-        # Load obstruction and map images
+        # Load obstruction and map images first
         base_path = os.path.dirname(os.path.abspath(__file__))
         obstruction_path = os.path.join(base_path, 'graphics', 'obstructions.png')
         map_path = os.path.join(base_path, 'graphics', 'map.png')
@@ -24,11 +19,22 @@ class World:
         self.obstruction_map = Image.open(obstruction_path).convert('L')
         self.background_map = Image.open(map_path)
         
-        # Image dimensions and center point
+        # Set up image dimensions and center point
         self.map_width, self.map_height = self.obstruction_map.size
-        self.center_x = self.map_width // 2
-        self.center_y = self.map_height // 2
-        self.current_interaction = None
+        self.center_x = int(self.map_width // 2)
+        self.center_y = int(self.map_height // 2)
+        
+        # Now load NPCs after map setup is complete
+        npc_path = os.path.join(base_path, 'npcs', '*.yaml')
+        self.locations = []
+        for npc_file in glob.glob(npc_path):
+            npc = NPC.from_yaml(npc_file)
+            if npc.needs_position:
+                # Find a suitable position for the NPC
+                x, y = self.find_random_position()
+                npc.x = x
+                npc.y = y
+            self.locations.append(npc)
 
     def get_location_at(self, x: int, y: int):
         for location in self.locations:
@@ -64,3 +70,21 @@ class World:
             # Return True if pixel is closer to white (walkable)
             return pixel_value > 127
         return False
+
+    def find_random_position(self) -> List[int]:
+        """Find a random walkable position that's not occupied by any character."""
+        # Define search bounds (adjust these based on your map size)
+        min_x, max_x = -10, 10
+        min_y, max_y = -10, 10
+        max_attempts = 100
+        
+        for _ in range(max_attempts):
+            x = random.randint(min_x, max_x)
+            y = random.randint(min_y, max_y)
+            
+            # Check if position is walkable and not occupied
+            if self.can_move_to(x, y) and not self.get_location_at(x, y):
+                return [x, y]
+        
+        # If no position found, return a default position
+        return [0, 0]

@@ -28,7 +28,7 @@ functions = [
                     "items": {
                         "type": "integer"
                     },
-                    "description": "The [x, y] position of the NPC"
+                    "description": "The [x, y] position of the NPC. If not provided, a random walkable position will be chosen."
                 },
                 "sequence": {
                     "type": "array",
@@ -156,7 +156,7 @@ functions = [
                     }
                 }
             },
-            "required": ["name", "emoji", "position", "sequence"]
+            "required": ["name", "emoji", "sequence"]
         }
     }
 ]
