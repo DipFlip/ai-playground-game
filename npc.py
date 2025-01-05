@@ -56,6 +56,14 @@ class NPC(Character):
                             # Process the choice's sequence and get its start state
                             choice_start = process_sequence(choice['sequence'], state_id)
                             choice_transitions[choice['choice_text']] = choice_start
+                        else:
+                            # Create a single state for this choice's action
+                            choice_state = f"state_{state_counter}"
+                            state_counter += 1
+                            # Remove choice-specific keys and keep action data
+                            action_data = {k: v for k, v in choice.items() if k not in ['choice_text', 'sequence']}
+                            states[choice_state] = NPCState(**action_data, next_state=None)
+                            choice_transitions[choice['choice_text']] = choice_state
                     transitions = choice_transitions
                 elif action['type'] == "ask":
                     next_state = f"state_{state_counter}"  # Next state will be the next one we create
