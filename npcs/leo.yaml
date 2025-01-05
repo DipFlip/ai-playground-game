@@ -7,13 +7,15 @@ npc:
       text: "I'm Leo the lion, king of the jungle!"
     - type: ask
       text: "What's your name, brave adventurer?"
-      save: name
+      user_input: name
     - type: talk
       text: "Nice to meet you, {name}! You look hungry."
     - type: talk
       text: "Would you like some meat, {name}?"
     - type: give
-      item: "Meat"
-      quantity: 1
+      text: "Here's some fresh meat for you!"
+      item:
+        name: "Meat"
+        quantity: 1
     - type: talk
       text: "Enjoy your meal, {name}! Remember, sharing is caring!" 

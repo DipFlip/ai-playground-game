@@ -9,9 +9,8 @@ from dataclasses import dataclass
 class NPCAction:
     type: str
     text: str = None
-    item: str = None
-    quantity: int = 1
-    save: str = None  # Field to save response to
+    user_input: str = None  # Field to store response variable name
+    item: Dict[str, Union[str, int]] = None  # Object containing name and quantity
 
 class NPC(Character):
     @classmethod
@@ -57,7 +56,7 @@ class NPC(Character):
     def provide_response(self, response: str) -> None:
         """Handle a response from the player"""
         if self.waiting_for_response and self.current_question:
-            self.responses[self.current_question.save] = response
+            self.responses[self.current_question.user_input] = response
             self.waiting_for_response = False
             self.current_question = None
 
@@ -72,8 +71,10 @@ class NPC(Character):
             formatted_text = self.format_text(action.text)
             self.talk(f"{self.name}: {formatted_text}")
         elif action.type == "give":
-            for _ in range(action.quantity):
-                character.add_item(action.item)
+            if action.item:
+                quantity = action.item.get('quantity', 1)
+                for _ in range(quantity):
+                    character.add_item(action.item['name'])
         elif action.type == "ask":
             self.talk(f"{self.name}: {action.text}")
             self.waiting_for_response = True
