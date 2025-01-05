@@ -70,6 +70,8 @@ class NPC(Character):
 
     def format_text(self, text: str) -> str:
         """Format text with stored responses"""
+        if not text:
+            return text
         try:
             return text.format(**self.responses)
         except KeyError:
@@ -86,10 +88,13 @@ class NPC(Character):
 
         # Handle the response based on state type
         if current_state.type == "ask":
-            self.responses[current_state.user_input] = response
+            if current_state.user_input:
+                self.responses[current_state.user_input] = response
             # Transition to next state using wildcard
             if current_state.transitions and "*" in current_state.transitions:
                 self.current_state_id = current_state.transitions["*"]
+            else:
+                self.current_state_id = current_state.next_state
         elif current_state.type == "Choice":
             # Check if response matches any of the choices
             if current_state.transitions and response in current_state.transitions:
@@ -101,8 +106,12 @@ class NPC(Character):
                     quantity = choice['item'].get('quantity', 1)
                     for _ in range(quantity):
                         character.add_item(choice['item']['name'])
+                    if choice.get('text'):
+                        formatted_text = self.format_text(choice['text'])
+                        self.talk(f"{self.name}: {formatted_text}")
                 elif choice.get('action') == 'talk' and choice.get('text'):
-                    self.talk(f"{self.name}: {choice['text']}")
+                    formatted_text = self.format_text(choice['text'])
+                    self.talk(f"{self.name}: {formatted_text}")
                 
                 # Transition to next state
                 self.current_state_id = current_state.transitions[response]
@@ -113,6 +122,7 @@ class NPC(Character):
         if not self.is_talking:
             self.is_talking = True
             self.current_state_id = next(iter(self.states))  # Reset to initial state
+            self.responses = {}  # Clear stored responses when starting new conversation
         
         current_state = self.get_current_state()
         if not current_state:
@@ -131,16 +141,19 @@ class NPC(Character):
                 for _ in range(quantity):
                     character.add_item(current_state.item['name'])
                 if current_state.text:
-                    self.talk(f"{self.name}: {current_state.text}")
+                    formatted_text = self.format_text(current_state.text)
+                    self.talk(f"{self.name}: {formatted_text}")
             # Auto-transition to next state
             self.current_state_id = current_state.next_state
         
         elif current_state.type == "ask":
-            self.talk(f"{self.name}: {current_state.text}")
+            formatted_text = self.format_text(current_state.text)
+            self.talk(f"{self.name}: {formatted_text}")
             self.waiting_for_response = True
         
         elif current_state.type == "Choice":
-            self.talk(f"{self.name}: {current_state.text}")
+            formatted_text = self.format_text(current_state.text)
+            self.talk(f"{self.name}: {formatted_text}")
             self.waiting_for_response = True
         
         elif current_state.type == "trade":
@@ -159,11 +172,14 @@ class NPC(Character):
                     for _ in range(offer_quantity):
                         character.add_item(offer['name'])
                     
-                    self.talk(f"{self.name}: {current_state.trade['success_text']}")
+                    formatted_text = self.format_text(current_state.trade['success_text'])
+                    self.talk(f"{self.name}: {formatted_text}")
                 else:
-                    self.talk(f"{self.name}: {current_state.trade['failure_text']}")
+                    formatted_text = self.format_text(current_state.trade['failure_text'])
+                    self.talk(f"{self.name}: {formatted_text}")
                 
                 if current_state.text:
-                    self.talk(f"{self.name}: {current_state.text}")
+                    formatted_text = self.format_text(current_state.text)
+                    self.talk(f"{self.name}: {formatted_text}")
             # Auto-transition to next state
             self.current_state_id = current_state.next_state
