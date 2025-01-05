@@ -1,7 +1,7 @@
 npc:
   name: "Choice example"
-  emoji: "🎒"
-  position: [1, 5]
+  emoji: "🤸‍♀️"
+  position: [2, 5]
   sequence:
     - type: talk
       text: "Welcome to Marco's Trading Post! I specialize in magical items."
