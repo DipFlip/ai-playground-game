@@ -261,10 +261,9 @@
             const playerInput = document.getElementById('player-input');
             const messages = document.getElementById('messages');
 
-            // Update messages
+            // Update messages with animation
             if (data.messages && data.messages.length > 0) {
-                messages.innerHTML = data.messages.map(msg => `<p>${msg}</p>`).join('');
-                messages.scrollTop = messages.scrollHeight;
+                updateMessages(data.messages);
             }
 
             // Show/hide conversation window based on if we're talking
