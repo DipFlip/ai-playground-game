@@ -17,8 +17,8 @@ SEQUENCE_FUNCTIONS = [
                         "properties": {
                             "type": {
                                 "type": "string",
-                                "enum": ["talk", "ask", "give", "trade", "Choice"],
-                                "description": "The type of action: talk (just dialogue), ask (requests input), give (gives item), trade (exchanges items), Choice (presents multiple options)"
+                                "enum": ["talk", "ask", "give", "trade", "Choice", "generate"],
+                                "description": "The type of action: talk (just dialogue), ask (requests input), give (gives item), trade (exchanges items), Choice (presents multiple options), generate (dynamically generates a new sequence)"
                             },
                             "text": {
                                 "type": "string",

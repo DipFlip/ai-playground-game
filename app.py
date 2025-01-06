@@ -76,7 +76,11 @@ def interact():
     if 'answer' in request.json:
         npc = game_world.current_interaction
         if npc:
-            npc.provide_response(request.json['answer'], game_world.character)
+            # Extract just the text value from the answer
+            answer = request.json['answer']
+            if isinstance(answer, dict) and 'text' in answer:
+                answer = answer['text']
+            npc.provide_response(answer, game_world.character)
     
     result = game_world.try_interact()
     

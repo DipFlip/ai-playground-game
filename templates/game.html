@@ -254,6 +254,67 @@
             });
         }
 
+        function handleInteractionResponse(data) {
+            const conversationWindow = document.getElementById('conversation-window');
+            const inputContainer = document.getElementById('input-container');
+            const choicesContainer = document.getElementById('choices-container');
+            const playerInput = document.getElementById('player-input');
+            const messages = document.getElementById('messages');
+
+            // Update messages
+            if (data.messages && data.messages.length > 0) {
+                messages.innerHTML = data.messages.map(msg => `<p>${msg}</p>`).join('');
+                messages.scrollTop = messages.scrollHeight;
+            }
+
+            // Show/hide conversation window based on if we're talking
+            conversationWindow.style.display = data.is_talking ? 'block' : 'none';
+
+            // Show/hide input based on if we're waiting for input
+            inputContainer.style.display = data.waitingForInput ? 'block' : 'none';
+
+            // Handle choices if any
+            if (data.choices && data.choices.length > 0) {
+                choicesContainer.style.display = 'block';
+                playerInput.style.display = 'none';
+                choicesContainer.innerHTML = data.choices
+                    .map(choice => `<button class="choice-button">${choice}</button>`)
+                    .join('');
+
+                // Add click handlers for choices
+                document.querySelectorAll('.choice-button').forEach(button => {
+                    button.addEventListener('click', function() {
+                        fetch('/interact', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ answer: this.textContent })
+                        })
+                        .then(response => response.json())
+                        .then(handleInteractionResponse);
+                    });
+                });
+
+                // Select the first choice by default
+                const firstChoice = document.querySelector('.choice-button');
+                if (firstChoice) {
+                    firstChoice.classList.add('selected');
+                }
+            } else {
+                choicesContainer.style.display = 'none';
+                playerInput.style.display = 'block';
+            }
+
+            // Update inventory if changed
+            if (data.inventory) {
+                const inventoryDiv = document.getElementById('inventory');
+                inventoryDiv.innerHTML = Object.entries(data.inventory)
+                    .map(([item, amount]) => `<p>${item}: <span id="item-${item}">${amount}</span></p>`)
+                    .join('');
+            }
+        }
+
         function interact() {
             fetch('/interact', {
                 method: 'POST',
@@ -263,74 +324,34 @@
                 body: JSON.stringify({})
             })
             .then(response => response.json())
-            .then(data => {
-                console.log('Interact response:', data);  // Debug log
-                
-                const conversationWindow = document.getElementById('conversation-window');
-                const inputContainer = document.getElementById('input-container');
-                const choicesContainer = document.getElementById('choices-container');
-                const textInput = document.getElementById('player-input');
-                const submitButton = document.getElementById('submit-answer');
-                const waitingForInput = data && data.waitingForInput;
-                
-                // Update messages if we have any
-                if (data && data.messages && data.messages.length > 0) {
-                    updateMessages(data.messages);
-                    conversationWindow.classList.add('visible');
-                } else {
-                    // If no messages and not talking, close the window
-                    if (!data.is_talking) {
-                        conversationWindow.classList.remove('visible');
-                        document.getElementById('messages').innerHTML = '';
-                    }
-                }
-                
-                // Always try to update inventory
-                updateInventory(data);
-                
-                if (waitingForInput) {
-                    inputContainer.style.display = 'block';
-                    inputContainer.classList.add('visible');
-                    
-                    // Handle choices if present
-                    if (data.choices && data.choices.length > 0) {
-                        choicesContainer.style.display = 'block';
-                        textInput.style.display = 'none';
-                        submitButton.style.display = 'none';
-                        
-                        // Clear previous choices
-                        choicesContainer.innerHTML = '';
-                        
-                        // Add choice buttons
-                        data.choices.forEach((choice, index) => {
-                            const button = document.createElement('button');
-                            button.textContent = choice;
-                            button.className = 'choice-button';
-                            if (index === 0) button.classList.add('selected');  // Select first choice by default
-                            button.onclick = () => submitAnswer(choice);
-                            choicesContainer.appendChild(button);
-                        });
-                    } else {
-                        choicesContainer.style.display = 'none';
-                        textInput.style.display = 'block';
-                        submitButton.style.display = 'block';
-                        textInput.value = '';  // Clear any previous input
-                        textInput.focus();
-                    }
-                } else {
-                    inputContainer.style.display = 'none';
-                    inputContainer.classList.remove('visible');
-                    choicesContainer.style.display = 'none';
-                    if (!data.is_talking) {
-                        conversationWindow.classList.remove('visible');
-                        document.getElementById('messages').innerHTML = '';
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error in interact:', error);
-            });
+            .then(handleInteractionResponse);
         }
+
+        function submitAnswer() {
+            const input = document.getElementById('player-input');
+            const answer = input.value;
+            input.value = '';  // Clear the input
+            
+            fetch('/interact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ answer: answer })
+            })
+            .then(response => response.json())
+            .then(handleInteractionResponse);
+        }
+
+        // Add event listener for Enter key on input
+        document.getElementById('player-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitAnswer();
+            }
+        });
+
+        // Add event listener for submit button
+        document.getElementById('submit-answer').addEventListener('click', submitAnswer);
 
         function updateInventory(data) {
             const inventoryDiv = document.getElementById('inventory');
@@ -393,102 +414,6 @@
                 messagesDiv.innerHTML = '';
             }
         }
-
-        function submitAnswer(choice = null) {
-            const input = document.getElementById('player-input');
-            const answer = choice || input.value.trim();  // Use choice if provided, otherwise use input value
-            
-            if (!answer) return;  // Don't submit empty answers
-            
-            fetch('/interact', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    answer: answer
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Submit answer response:', data);  // Debug log
-                
-                // Update messages if we have any
-                if (data && data.messages) {
-                    updateMessages(data.messages);
-                }
-                
-                // Always try to update inventory
-                updateInventory(data);
-                
-                // Handle input container
-                const inputContainer = document.getElementById('input-container');
-                const choicesContainer = document.getElementById('choices-container');
-                const textInput = document.getElementById('player-input');
-                const submitButton = document.getElementById('submit-answer');
-                const conversationWindow = document.getElementById('conversation-window');
-                
-                if (!choice) {
-                    textInput.value = '';  // Clear input if it was a text input
-                }
-                
-                const waitingForInput = data && data.waitingForInput;
-                console.log('Waiting for input after submit:', waitingForInput);  // Debug log
-                
-                if (waitingForInput) {
-                    conversationWindow.classList.add('visible');
-                    inputContainer.style.display = 'block';
-                    inputContainer.classList.add('visible');
-                    
-                    // Handle choices if present
-                    if (data.choices && data.choices.length > 0) {
-                        choicesContainer.style.display = 'block';
-                        textInput.style.display = 'none';
-                        submitButton.style.display = 'none';
-                        
-                        // Clear previous choices
-                        choicesContainer.innerHTML = '';
-                        
-                        // Add choice buttons
-                        data.choices.forEach((choice, index) => {
-                            const button = document.createElement('button');
-                            button.textContent = choice;
-                            button.className = 'choice-button';
-                            if (index === 0) button.classList.add('selected');  // Select first choice by default
-                            button.onclick = () => submitAnswer(choice);
-                            choicesContainer.appendChild(button);
-                        });
-                    } else {
-                        choicesContainer.style.display = 'none';
-                        textInput.style.display = 'block';
-                        submitButton.style.display = 'block';
-                        if (!choice) {
-                            textInput.focus();
-                        }
-                    }
-                } else {
-                    inputContainer.style.display = 'none';
-                    inputContainer.classList.remove('visible');
-                    choicesContainer.style.display = 'none';
-                    
-                    // Close the window if not talking anymore
-                    if (!data.is_talking) {
-                        conversationWindow.classList.remove('visible');
-                        document.getElementById('messages').innerHTML = '';
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error in submitAnswer:', error);
-            });
-        }
-        
-        document.getElementById('submit-answer').addEventListener('click', submitAnswer);
-        document.getElementById('player-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                submitAnswer();
-            }
-        });
 
         // Add NPC Modal functionality
         const modal = document.getElementById('npc-modal');

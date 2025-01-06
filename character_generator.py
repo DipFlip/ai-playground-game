@@ -8,7 +8,30 @@ from sequence_schema import SEQUENCE_FUNCTIONS
 dotenv.load_dotenv()
 
 # Initialize OpenAI client
-client = OpenAI()  # Make sure you have OPENAI_API_KEY in your environment variables
+client = OpenAI()
+
+def create_sequence(prompt):
+    """
+    Creates just a sequence based on the given prompt using OpenAI's API.
+    Returns the sequence directly without NPC wrapper.
+    """
+    try:
+        sequence_response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            functions=SEQUENCE_FUNCTIONS,
+            function_call={"name": "create_sequence"}
+        )
+
+        # Extract the sequence data
+        sequence_data = json.loads(sequence_response.choices[0].message.function_call.arguments)
+        return sequence_data["sequence"]
+
+    except Exception as e:
+        print(f"Error creating sequence: {str(e)}")
+        return None
 
 def create_character(prompt):
     """
