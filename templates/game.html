@@ -41,6 +41,18 @@
             </div>
             
             <div class="controls">
+                <div id="npc-creator">
+                    <button id="add-npc-button">Add NPC</button>
+                    <div id="npc-modal" class="modal">
+                        <div class="modal-content">
+                            <span class="close">&times;</span>
+                            <h2>Create New NPC</h2>
+                            <textarea id="npc-description" placeholder="Describe the NPC you want to create..."></textarea>
+                            <button id="create-npc">Create NPC</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="movement-controls">
                     <div class="spacer"></div>
                     <button class="movement-button" data-direction="north">North</button>
@@ -70,17 +82,6 @@
             </div>
         </div>
 
-        <div id="npc-creator">
-            <button id="add-npc-button">Add NPC</button>
-            <div id="npc-modal" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h2>Create New NPC</h2>
-                    <textarea id="npc-description" placeholder="Describe the NPC you want to create..."></textarea>
-                    <button id="create-npc">Create NPC</button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>

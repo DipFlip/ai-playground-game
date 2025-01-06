@@ -205,9 +205,6 @@ body {
 
 /* NPC Creator Styles */
 #add-npc-button {
-    position: fixed;
-    top: 20px;
-    right: 20px;
     padding: 10px 20px;
     background: #4CAF50;
     color: white;
@@ -215,6 +212,8 @@ body {
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
+    margin-bottom: 15px;
+    width: 100%;
 }
 
 #add-npc-button:hover {
