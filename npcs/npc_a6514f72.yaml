@@ -1,0 +1,53 @@
+npc:
+  name: Pipsqueak the Jester
+  emoji: 🤡
+  personality: Pipsqueak the Jester is a mischievous and clever clown with a knack
+    for making witty trades. Always ready with a joke or a riddle, Pipsqueak entertains
+    and surprises travelers with unexpected bargains. His colorful attire and quick
+    wit make him a memorable character in any setting.
+sequence:
+- type: talk
+  text: Welcome, welcome, dear traveler! You've stumbled upon Pipsqueak the Jester's
+    corner of mischief and delight!
+- type: talk
+  text: Before we get into the nitty-gritty of trades and treasures, how about a little
+    humor to lighten the mood? What's bright, colorful, and always ready for a good
+    laugh? Me, of course!
+- type: trade
+  text: 'Now, onto some serious business. I have a riddle for you: What comes once
+    in a minute, twice in a moment, but never in a thousand years? Solve it, and perhaps
+    a trade could be yours!'
+  trade:
+    want:
+      name: gold coin
+      quantity: 3
+    offer:
+      name: mysterious amulet
+    success_text: Well done, clever traveler! Here's your mysterious amulet for those
+      shiny coins.
+    failure_text: Oh dear, it seems you don't have enough gold coins. Come back when
+      you've juggled a few more!
+- type: ask
+  text: Would you like to hear another joke, or perhaps try your luck with another
+    riddle?
+  user_input: choice
+- type: Choice
+  text: Make your choice, dear traveler!
+  choices:
+  - choice_text: Tell me a joke, Pipsqueak!
+    type: talk
+    text: Why did the scarecrow win an award? Because he was outstanding in his field!
+  - choice_text: I crave another riddle, Pipsqueak!
+    type: talk
+    text: 'Riddle me this: I speak without a mouth and hear without ears. I have no
+      body, but I come alive with the wind. What am I?'
+  - choice_text: Let's make a trade, Pipsqueak!
+    type: trade
+    text: Ah, the sweet sound of commerce! Let's see what you've got.
+    trade:
+      want:
+        name: silver ring
+      offer:
+        name: bag of tricks
+      success_text: A splendid trade! Here is your bag of tricks, filled with wonders.
+      failure_text: Alas, you seem to be missing a silver ring. Perhaps next time!

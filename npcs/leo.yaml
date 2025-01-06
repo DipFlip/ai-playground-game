@@ -4,26 +4,27 @@ npc:
   position: [2, 1]
   wander:
     enabled: true
-    interval: 4  # Wander every 4 seconds
-  sequence:
-    - type: talk
-      text: "I'm Leo the lion, king of the jungle!"
-    - type: ask
-      text: "What's your name, brave adventurer?"
-      user_input: name
-    - type: talk
-      text: "Nice to meet you, {name}! You look hungry."
-    - type: Choice
-      text: "Would you like some meat, {name}?"
-      choices:
-        - choice_text: "Yes, please!"
-          type: give
-          item:
-            name: "Meat"
-            quantity: 1
-          text: "Here's some fresh meat for you!"
-        - choice_text: "No, thanks"
-          type: talk
-          text: "Alright, maybe next time then!"
-    - type: talk
-      text: "Remember, sharing is caring, {name}! Come back anytime." 
+    interval: 4 
+  personality: "A lion that gives meat"
+sequence:
+  - type: talk
+    text: "I'm Leo the lion, king of the jungle!"
+  - type: ask
+    text: "What's your name, brave adventurer?"
+    user_input: name
+  - type: talk
+    text: "Nice to meet you, {name}! You look hungry."
+  - type: Choice
+    text: "Would you like some meat, {name}?"
+    choices:
+      - choice_text: "Yes, please!"
+        type: give
+        item:
+          name: "Meat"
+          quantity: 1
+        text: "Here's some fresh meat for you!"
+      - choice_text: "No, thanks"
+        type: talk
+        text: "Alright, maybe next time then!"
+  - type: talk
+    text: "Remember, sharing is caring, {name}! Come back anytime." 

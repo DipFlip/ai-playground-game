@@ -2,18 +2,19 @@ npc:
   name: "Choice example"
   emoji: "🤸‍♀️"
   position: [2, 5]
-  sequence:
-    - type: talk
-      text: "Welcome to Marco's Trading Post! I specialize in magical items."
-    - type: Choice
-      text: "Want to trade?"
-      choices:
-        - choice_text: "Yes"
-          type: give
-          text: "Here's some meat for you!"
-          item:
-            name: "Meat"
-            quantity: 2
-        - choice_text: "No"
-          type: talk
-          text: "Alright, come back if you change your mind!"
+  personality: "A character with a multiple choice question"
+sequence:
+  - type: talk
+    text: "Welcome to Marco's Trading Post! I specialize in magical items."
+  - type: Choice
+    text: "Want to trade?"
+    choices:
+      - choice_text: "Yes"
+        type: give
+        text: "Here's some meat for you!"
+        item:
+          name: "Meat"
+          quantity: 2
+      - choice_text: "No"
+        type: talk
+        text: "Alright, come back if you change your mind!"

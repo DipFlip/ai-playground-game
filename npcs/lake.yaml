@@ -3,10 +3,11 @@ npc:
   emoji: "🎣"
   position: [-6, -7]
   wander:
-    enabled: false  # Lakes don't move!
-  sequence:
-    - type: give
-      text: "You caught a fish!"
-      item:
-        name: "fish"
-        quantity: 1 
+    enabled: false
+  personality: "A lake that gives fish"
+sequence:
+  - type: give
+    text: "You caught a fish!"
+    item:
+      name: "fish"
+      quantity: 1 

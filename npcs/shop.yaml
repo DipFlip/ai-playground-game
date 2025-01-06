@@ -3,16 +3,17 @@ npc:
   emoji: "👩‍🌾"
   position: [5, -1]
   wander:
-    enabled: false  # Shops stay in place
-  sequence:
-    - type: trade
-      text: "Got anything to sell?"
-      trade:
-        want:
-          name: "fish"
-          quantity: 1
-        offer:
-          name: "coins"
-          quantity: 1
-        success_text: "Nice fish, take a coin for it!"
-        failure_text: "Come back when you have a fish to sell!"
+    enabled: false
+  personality: "A shop that trades fish for coins"
+sequence:
+  - type: trade
+    text: "Got anything to sell?"
+    trade:
+      want:
+        name: "fish"
+        quantity: 1
+      offer:
+        name: "coins"
+        quantity: 1
+      success_text: "Nice fish, take a coin for it!"
+      failure_text: "Come back when you have a fish to sell!"

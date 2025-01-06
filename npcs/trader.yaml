@@ -2,19 +2,20 @@ npc:
   name: "Marco"
   emoji: "🎒"
   position: [3, 3]
-  sequence:
-    - type: talk
-      text: "Welcome to Marco's Trading Post! I specialize in magical items."
-    - type: talk
-      text: "I can transform 3 pieces of meat into a magical potion!"
-    - type: trade
-      text: "Would you like to make another trade?"
-      trade:
-        want:
-          name: "Meat"
-          quantity: 3
-        offer:
-          name: "Potion"
-          quantity: 1
-        success_text: "Excellent! Here's your magical potion. Use it wisely!"
-        failure_text: "Ah, it seems you don't have enough meat. Come back when you have 3 pieces!" 
+  personality: "A fishy dude who you should be careful with"
+sequence:
+  - type: talk
+    text: "Welcome to Marco's Trading Post! I specialize in magical items."
+  - type: talk
+    text: "I can transform 3 pieces of meat into a magical potion!"
+  - type: trade
+    text: "Would you like to make another trade?"
+    trade:
+      want:
+        name: "Meat"
+        quantity: 3
+      offer:
+        name: "Potion"
+        quantity: 1
+      success_text: "Excellent! Here's your magical potion. Use it wisely!"
+      failure_text: "Ah, it seems you don't have enough meat. Come back when you have 3 pieces!" 
