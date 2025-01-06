@@ -5,6 +5,7 @@ from PIL import Image
 import os
 import glob
 import random
+import time
 
 class World:
     def __init__(self):
@@ -35,6 +36,20 @@ class World:
                 npc.x = x
                 npc.y = y
             self.locations.append(npc)
+        
+        # Initialize last update time
+        self.last_update_time = time.time()
+
+    def update(self):
+        """Update the world state, including NPC movements."""
+        current_time = time.time()
+        
+        # Update NPCs
+        for location in self.locations:
+            if isinstance(location, NPC):
+                location.try_wander(self, current_time)
+        
+        self.last_update_time = current_time
 
     def get_location_at(self, x: int, y: int):
         for location in self.locations:

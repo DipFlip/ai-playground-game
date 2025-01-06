@@ -3,6 +3,8 @@ from typing import List, Dict, Union, Optional
 import yaml
 import os
 from dataclasses import dataclass
+import random
+import time
 
 @dataclass
 class NPCState:
@@ -26,6 +28,18 @@ class NPC(Character):
         # Get position from data or let the world decide later
         position = data.get('position', None)
         x, y = position if position else (0, 0)
+        
+        # Get wandering behavior settings
+        wander_settings = data.get('wander', {})
+        if isinstance(wander_settings, bool):
+            # Handle case where wander is just a boolean
+            should_wander = wander_settings
+            wander_interval = 5
+        else:
+            # Default wandering behavior based on NPC type
+            default_should_wander = not any(word in data.get('name', '').lower() for word in ['shop', 'lake', 'store'])
+            should_wander = wander_settings.get('enabled', default_should_wander)
+            wander_interval = wander_settings.get('interval', 5)
         
         # Convert YAML sequence to state machine
         states = {}
@@ -87,12 +101,14 @@ class NPC(Character):
 
         process_sequence(data['sequence'])
         
-        npc = cls(x, y, data['emoji'], states, initial_state, data['name'])
+        npc = cls(x, y, data['emoji'], states, initial_state, data['name'], 
+                 should_wander=should_wander, wander_interval=wander_interval)
         npc.needs_position = position is None
         return npc
 
     def __init__(self, x: int, y: int, emoji: str='', states: Dict[str, NPCState] = None, 
-                 initial_state: str = None, name: str = "Unknown"):
+                 initial_state: str = None, name: str = "Unknown", 
+                 should_wander: bool = True, wander_interval: int = 5):
         super().__init__(x, y, emoji)
         self.states = states if states else {"start": NPCState(type="talk", text="...")}
         self.current_state_id = initial_state if initial_state else "start"
@@ -101,6 +117,10 @@ class NPC(Character):
         self.responses = {}  # Store player responses
         self.waiting_for_response = False
         self.needs_position = False  # Flag to indicate if we need a position from the world
+        self.last_wander_time = time.time() + random.uniform(0, 5)  # Random initial offset
+        self.wander_interval = wander_interval  # Default wander interval in seconds
+        self.wander_interval_offset = random.uniform(-2, 2)  # Random offset to interval
+        self.should_wander = should_wander  # Whether this NPC should wander
 
     def get_current_state(self) -> Optional[NPCState]:
         if self.current_state_id == "end":
@@ -207,3 +227,26 @@ class NPC(Character):
                     self.talk(f"{self.name}: {formatted_text}")
             # Auto-transition to next state
             self.current_state_id = current_state.next_state
+
+    def try_wander(self, world, current_time: float) -> bool:
+        """Attempt to make the NPC wander if enough time has passed."""
+        if not self.should_wander or self.is_talking:
+            return False
+
+        actual_interval = self.wander_interval + self.wander_interval_offset
+        if current_time - self.last_wander_time >= actual_interval:
+            # Choose a random direction
+            directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+            dx, dy = random.choice(directions)
+            new_x, new_y = self.x + dx, self.y + dy
+
+            # Check if the new position is valid and unoccupied
+            if world.can_move_to(new_x, new_y) and not world.get_location_at(new_x, new_y):
+                self.x = new_x
+                self.y = new_y
+                self.last_wander_time = current_time
+                # Add some randomness to next interval
+                self.wander_interval_offset = random.uniform(-2, 2)
+                return True
+
+        return False

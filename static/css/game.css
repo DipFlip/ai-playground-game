@@ -41,6 +41,7 @@ body {
     width: 30px;
     height: 30px;
     transition: all 0.2s ease-out;
+    z-index: 1;
 }
 
 .controls {
@@ -81,6 +82,22 @@ body {
     font-size: 1.1rem;
 }
 
+.messages p {
+    margin: 5px 0;
+    line-height: 1.5;
+}
+
+.messages .movement-message {
+    color: #666;
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.messages .dialogue-message {
+    color: #000;
+    font-size: 1.1rem;
+}
+
 .conversation-window {
     position: absolute;
     bottom: 0;
@@ -94,6 +111,7 @@ body {
     display: none;
     max-height: 250px;
     border-radius: 4px;
+    z-index: 10;
 }
 
 .conversation-window.visible {

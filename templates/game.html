@@ -84,6 +84,58 @@
     </div>
 
     <script>
+        // Add periodic game state update
+        setInterval(function() {
+            fetch('/game_state')
+                .then(response => response.json())
+                .then(data => {
+                    // Update character position
+                    const character = document.getElementById('character');
+                    character.style.left = (data.character.x * 40 + 420) + 'px';
+                    character.style.top = (data.character.y * 40 + 420) + 'px';
+                    character.innerHTML = data.character.emoji;
+                    
+                    // Update NPC positions
+                    const worldGrid = document.querySelector('.world-grid');
+                    
+                    // Update or create NPCs
+                    data.locations.forEach(location => {
+                        const locationId = `location-${location.name || location.type.toLowerCase()}`;
+                        let locationDiv = document.getElementById(locationId);
+                        
+                        if (!locationDiv) {
+                            // Create new location element if it doesn't exist
+                            locationDiv = document.createElement('div');
+                            locationDiv.id = locationId;
+                            locationDiv.className = `location ${location.type.toLowerCase()}`;
+                            locationDiv.title = location.type;
+                            worldGrid.appendChild(locationDiv);
+                        }
+                        
+                        // Update position and emoji with smooth transition
+                        locationDiv.style.left = (location.x * 40 + 420) + 'px';
+                        locationDiv.style.top = (location.y * 40 + 420) + 'px';
+                        locationDiv.innerHTML = location.emoji;
+                    });
+                    
+                    // Remove any locations that no longer exist
+                    const existingLocations = document.querySelectorAll('.location');
+                    existingLocations.forEach(loc => {
+                        const locId = loc.id;
+                        const stillExists = data.locations.some(newLoc => 
+                            locId === `location-${newLoc.name || newLoc.type.toLowerCase()}`
+                        );
+                        if (!stillExists) {
+                            loc.remove();
+                        }
+                    });
+                    
+                    // Update position display
+                    document.getElementById('pos-x').textContent = data.character.x;
+                    document.getElementById('pos-y').textContent = data.character.y;
+                });
+        }, 1000);  // Update every second
+
         // Add keyboard event listener
         document.addEventListener('keydown', function(event) {
             // Ignore keyboard controls if we're typing in the input field or the NPC modal is open
@@ -304,26 +356,30 @@
                 const lastMessage = validMessages[validMessages.length - 1];
                 
                 // Update all previous messages normally
-                messagesDiv.innerHTML = validMessages.slice(0, -1).map(msg => `<p>${msg}</p>`).join('');
+                messagesDiv.innerHTML = validMessages.slice(0, -1).map(msg => {
+                    const isMovement = msg.includes("moves ");
+                    return `<p class="${isMovement ? 'movement-message' : 'dialogue-message'}">${msg}</p>`;
+                }).join('');
                 
                 // Create a new paragraph for the last message
                 const newP = document.createElement('p');
+                const isMovement = lastMessage.includes("moves ");
+                newP.className = isMovement ? 'movement-message' : 'dialogue-message';
                 messagesDiv.appendChild(newP);
                 
                 // Animate the last message
                 let delay = 0;
-                const charDelay = 30; // 50ms between starting each character
-                const visibilityDelay = 20; // Start showing each character after 20ms
+                const charDelay = isMovement ? 15 : 30; // Faster animation for movement messages
+                const visibilityDelay = 20;
                 
                 // Split the message into characters and create spans
                 [...lastMessage].forEach((char, index) => {
                     const span = document.createElement('span');
                     span.textContent = char;
                     span.className = 'message-char';
-                    span.style.animationDelay = `${delay}ms`; // Delay the bounce animation
+                    span.style.animationDelay = `${delay}ms`;
                     newP.appendChild(span);
                     
-                    // Start showing the character slightly after starting its animation
                     setTimeout(() => {
                         span.classList.add('visible');
                     }, delay + visibilityDelay);

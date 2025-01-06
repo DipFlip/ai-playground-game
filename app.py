@@ -149,5 +149,23 @@ def create_npc():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/game_state')
+def game_state():
+    game_world.update()  # Update world state including NPC movements
+    return jsonify({
+        'character': {
+            'x': game_world.character.x,
+            'y': game_world.character.y,
+            'emoji': game_world.character.emoji
+        },
+        'locations': [{
+            'x': loc.x,
+            'y': loc.y,
+            'emoji': loc.emoji,
+            'type': loc.__class__.__name__,
+            'name': getattr(loc, 'name', None)  # Include NPC name if it exists
+        } for loc in game_world.locations]
+    })
+
 if __name__ == '__main__':
     app.run(debug=True) 

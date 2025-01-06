@@ -2,6 +2,9 @@ npc:
   name: "Leo"
   emoji: "🦁"
   position: [2, 1]
+  wander:
+    enabled: true
+    interval: 4  # Wander every 4 seconds
   sequence:
     - type: talk
       text: "I'm Leo the lion, king of the jungle!"

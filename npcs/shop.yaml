@@ -2,6 +2,8 @@ npc:
   name: "Shop"
   emoji: "👩‍🌾"
   position: [5, -1]
+  wander:
+    enabled: false  # Shops stay in place
   sequence:
     - type: trade
       text: "Got anything to sell?"
