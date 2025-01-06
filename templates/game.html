@@ -85,6 +85,28 @@
     </div>
 
     <script>
+        // Initialize audio objects for each sound
+        const sounds = {
+            'a': new Audio('/sounds/a.ogg'),
+            'aa': new Audio('/sounds/aa.ogg'),
+            'ae': new Audio('/sounds/ae.ogg'),
+            'i': new Audio('/sounds/i.ogg'),
+            'e': new Audio('/sounds/e.ogg'),
+            'o': new Audio('/sounds/o.ogg'),
+            'oe': new Audio('/sounds/oe.ogg'),
+            'u': new Audio('/sounds/u.ogg')
+        };
+
+        // Function to play a random sound with random pitch
+        function playRandomSound() {
+            const soundKeys = Object.keys(sounds);
+            const randomSound = sounds[soundKeys[Math.floor(Math.random() * soundKeys.length)]].cloneNode();
+            const randomPitch = 1 + (Math.random() * 1);
+            randomSound.preservesPitch = false;
+            randomSound.playbackRate = randomPitch;
+            randomSound.play().catch(e => console.log('Audio play failed:', e));
+        }
+
         // Add periodic game state update
         setInterval(function() {
             fetch('/game_state')
@@ -392,6 +414,7 @@
                 let delay = 0;
                 const charDelay = isMovement ? 15 : 30; // Faster animation for movement messages
                 const visibilityDelay = 20;
+                let charCount = 0;
                 
                 // Split the message into characters and create spans
                 [...lastMessage].forEach((char, index) => {
@@ -403,6 +426,13 @@
                     
                     setTimeout(() => {
                         span.classList.add('visible');
+                        // Play sound every 2 non-space characters for dialogue messages
+                        if (!isMovement && char !== ' ') {
+                            charCount++;
+                            if (charCount % 4 === 0) {
+                                playRandomSound();
+                            }
+                        }
                     }, delay + visibilityDelay);
                     
                     delay += charDelay;
