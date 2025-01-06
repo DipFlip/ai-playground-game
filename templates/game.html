@@ -41,6 +41,12 @@
             </div>
             
             <div class="controls">
+                <div class="audio-control">
+                    <button id="audio-toggle" class="control-button">
+                        🔊 Sound On
+                    </button>
+                </div>
+
                 <div id="npc-creator">
                     <button id="add-npc-button">Add NPC</button>
                     <div id="npc-modal" class="modal">
@@ -97,11 +103,22 @@
             'u': new Audio('/sounds/u.ogg')
         };
 
+        // Audio state
+        let isSoundEnabled = true;
+
+        // Audio toggle functionality
+        const audioToggle = document.getElementById('audio-toggle');
+        audioToggle.onclick = function() {
+            isSoundEnabled = !isSoundEnabled;
+            audioToggle.innerHTML = isSoundEnabled ? '🔊 Sound On' : '🔈 Sound Off';
+        };
+
         // Function to play a random sound with random pitch
         function playRandomSound() {
+            if (!isSoundEnabled) return;
             const soundKeys = Object.keys(sounds);
             const randomSound = sounds[soundKeys[Math.floor(Math.random() * soundKeys.length)]].cloneNode();
-            const randomPitch = 1 + (Math.random() * 1);
+            const randomPitch = 1.5 + (Math.random() * 1);
             randomSound.preservesPitch = false;
             randomSound.playbackRate = randomPitch;
             randomSound.play().catch(e => console.log('Audio play failed:', e));
