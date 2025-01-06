@@ -154,6 +154,7 @@ body {
 
 .choice-button {
     padding: 8px 15px;
+    margin: 2px 5px;
     background: #8B4513;
     color: white;
     border: none;
