@@ -93,6 +93,45 @@
                 return;
             }
 
+            const choicesContainer = document.getElementById('choices-container');
+            if (choicesContainer.style.display === 'block') {
+                // Handle choice selection
+                const choices = Array.from(choicesContainer.getElementsByClassName('choice-button'));
+                if (choices.length === 0) return;
+
+                const currentIndex = choices.findIndex(choice => choice.classList.contains('selected'));
+                let newIndex = currentIndex;
+
+                switch (event.key) {
+                    case 'ArrowUp':
+                    case 'w':
+                    case 'a':
+                        event.preventDefault();
+                        newIndex = currentIndex <= 0 ? choices.length - 1 : currentIndex - 1;
+                        break;
+                    case 'ArrowDown':
+                    case 's':
+                    case 'd':
+                        event.preventDefault();
+                        newIndex = currentIndex >= choices.length - 1 ? 0 : currentIndex + 1;
+                        break;
+                    case 'Enter':
+                    case ' ':
+                        event.preventDefault();
+                        if (currentIndex !== -1) {
+                            choices[currentIndex].click();
+                        }
+                        return;
+                }
+
+                // Update selection
+                choices.forEach(choice => choice.classList.remove('selected'));
+                if (newIndex !== -1) {
+                    choices[newIndex].classList.add('selected');
+                }
+                return;
+            }
+
             const keyMappings = {
                 'ArrowUp': 'north',
                 'ArrowDown': 'south',
@@ -210,10 +249,11 @@
                         choicesContainer.innerHTML = '';
                         
                         // Add choice buttons
-                        data.choices.forEach(choice => {
+                        data.choices.forEach((choice, index) => {
                             const button = document.createElement('button');
                             button.textContent = choice;
                             button.className = 'choice-button';
+                            if (index === 0) button.classList.add('selected');  // Select first choice by default
                             button.onclick = () => submitAnswer(choice);
                             choicesContainer.appendChild(button);
                         });
@@ -227,6 +267,7 @@
                 } else {
                     inputContainer.style.display = 'none';
                     inputContainer.classList.remove('visible');
+                    choicesContainer.style.display = 'none';
                     if (!data.is_talking) {
                         conversationWindow.classList.remove('visible');
                         document.getElementById('messages').innerHTML = '';
@@ -322,10 +363,11 @@
                         choicesContainer.innerHTML = '';
                         
                         // Add choice buttons
-                        data.choices.forEach(choice => {
+                        data.choices.forEach((choice, index) => {
                             const button = document.createElement('button');
                             button.textContent = choice;
                             button.className = 'choice-button';
+                            if (index === 0) button.classList.add('selected');  // Select first choice by default
                             button.onclick = () => submitAnswer(choice);
                             choicesContainer.appendChild(button);
                         });
@@ -340,12 +382,12 @@
                 } else {
                     inputContainer.style.display = 'none';
                     inputContainer.classList.remove('visible');
+                    choicesContainer.style.display = 'none';
+                    
                     // Close the window if not talking anymore
                     if (!data.is_talking) {
-                        setTimeout(() => {
-                            conversationWindow.classList.remove('visible');
-                            document.getElementById('messages').innerHTML = '';
-                        }, 2000); // Give 2 seconds to read the last message
+                        conversationWindow.classList.remove('visible');
+                        document.getElementById('messages').innerHTML = '';
                     }
                 }
             })

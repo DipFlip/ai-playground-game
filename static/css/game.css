@@ -162,6 +162,22 @@ body {
     font-size: 1.1rem;
     font-family: inherit;
     transition: background-color 0.2s;
+    position: relative;
+    padding-left: 30px;
+}
+
+.choice-button.selected {
+    background: #A0522D;
+}
+
+.choice-button.selected::before {
+    content: "➤";
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: white;
+    font-size: 1.2rem;
 }
 
 .choice-button:hover {
