@@ -1,0 +1,15 @@
+npc:
+  name: "Botty"
+  emoji: "🤖"
+  position: [5, 3]
+  wander:
+    enabled: true
+    interval: 4  # Wander every 4 seconds
+  sequence:
+    - type: talk
+      text: "I'm Botty, your friendly neighborhood robot!"
+    - type: ask
+      text: "What do you want to talk about?"
+      user_input: topic
+    - type: generate
+      context: "A sequence with a multiple choice question and a give item about: {topic}"
