@@ -351,6 +351,7 @@
             if (data.choices && data.choices.length > 0) {
                 choicesContainer.style.display = 'block';
                 playerInput.style.display = 'none';
+                document.getElementById('submit-answer').style.display = 'none';  // Hide submit button for choices
                 choicesContainer.innerHTML = data.choices
                     .map(choice => `<button class="choice-button">${choice}</button>`)
                     .join('');
@@ -378,6 +379,7 @@
             } else {
                 choicesContainer.style.display = 'none';
                 playerInput.style.display = 'block';
+                document.getElementById('submit-answer').style.display = 'block';  // Show submit button for text input
             }
 
             // Update inventory if changed
