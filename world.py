@@ -1,18 +1,25 @@
 from character import Character
 from npc import NPC
-from typing import List
+from typing import List, Dict
 from PIL import Image
 import os
 import glob
 import random
 import time
 
-# Global in-memory storage for dynamically created NPCs
+# Global in-memory storage for all dynamic state
 DYNAMIC_NPCS = []
+NPC_POSITIONS = {}  # Store current positions of all NPCs
+PLAYER_STATE = {
+    'x': 0,
+    'y': 0,
+    'inventory': {}
+}
 
 class World:
     def __init__(self):
-        self.character = Character(0, 0)
+        self.character = Character(PLAYER_STATE['x'], PLAYER_STATE['y'])
+        self.character.inventory = PLAYER_STATE['inventory'].copy()
         self.current_interaction = None
         
         # Load obstruction and map images first
@@ -35,20 +42,36 @@ class World:
         npc_path = os.path.join(base_path, 'npcs', '*.yaml')
         for npc_file in glob.glob(npc_path):
             npc = NPC.from_yaml(npc_file)
-            if npc.needs_position:
+            npc_id = os.path.basename(npc_file)
+            
+            # Use stored position if available
+            if npc_id in NPC_POSITIONS:
+                npc.x, npc.y = NPC_POSITIONS[npc_id]['x'], NPC_POSITIONS[npc_id]['y']
+            elif npc.needs_position:
                 # Find a suitable position for the NPC
                 x, y = self.find_random_position()
-                npc.x = x
-                npc.y = y
+                npc.x, npc.y = x, y
+                NPC_POSITIONS[npc_id] = {'x': x, 'y': y}
+            else:
+                NPC_POSITIONS[npc_id] = {'x': npc.x, 'y': npc.y}
+                
             self.locations.append(npc)
         
         # Load dynamic NPCs from memory
-        for npc_data in DYNAMIC_NPCS:
+        for i, npc_data in enumerate(DYNAMIC_NPCS):
             npc = NPC.from_yaml_data(npc_data)
-            if npc.needs_position:
+            npc_id = f"dynamic_{i}"
+            
+            # Use stored position if available
+            if npc_id in NPC_POSITIONS:
+                npc.x, npc.y = NPC_POSITIONS[npc_id]['x'], NPC_POSITIONS[npc_id]['y']
+            elif npc.needs_position:
                 x, y = self.find_random_position()
-                npc.x = x
-                npc.y = y
+                npc.x, npc.y = x, y
+                NPC_POSITIONS[npc_id] = {'x': x, 'y': y}
+            else:
+                NPC_POSITIONS[npc_id] = {'x': npc.x, 'y': npc.y}
+                
             self.locations.append(npc)
         
         # Initialize last update time
@@ -58,10 +81,18 @@ class World:
         """Update the world state, including NPC movements."""
         current_time = time.time()
         
-        # Update NPCs
-        for location in self.locations:
+        # Update NPCs and their positions in memory
+        for i, location in enumerate(self.locations):
             if isinstance(location, NPC):
-                location.try_wander(self, current_time)
+                if location.try_wander(self, current_time):
+                    # If NPC moved, update its position in memory
+                    npc_id = f"dynamic_{i}" if i >= len(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'npcs', '*.yaml'))) else os.path.basename(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'npcs', '*.yaml'))[i])
+                    NPC_POSITIONS[npc_id] = {'x': location.x, 'y': location.y}
+        
+        # Update player state in memory
+        PLAYER_STATE['x'] = self.character.x
+        PLAYER_STATE['y'] = self.character.y
+        PLAYER_STATE['inventory'] = self.character.inventory.copy()
         
         self.last_update_time = current_time
 
