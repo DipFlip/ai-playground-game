@@ -6,11 +6,7 @@ import dotenv
 from npc_schema import NPC_FUNCTIONS
 from sequence_schema import SEQUENCE_FUNCTIONS
 
-# Try to load from .env file, but don't fail if it doesn't exist
-try:
-    dotenv.load_dotenv()
-except:
-    pass
+dotenv.load_dotenv()
 
 # Initialize OpenAI client with explicit API key from environment
 client = OpenAI(
