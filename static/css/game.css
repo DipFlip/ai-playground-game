@@ -47,11 +47,37 @@ body {
 .controls {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.movement-controls {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    width: 150px;
+    margin-bottom: 10px;
+}
+
+.status {
+    width: 100%;
+}
+
+#npc-creator {
+    width: 100%;
+    margin: 10px 0;
 }
 
 .audio-control {
-    margin-bottom: 10px;
+    width: 100%;
+}
+
+.position-display {
+    width: 100%;
+}
+
+.position-display h3, .status h3 {
+    margin: 0 0 10px 0;
 }
 
 .control-button {
@@ -70,28 +96,12 @@ body {
     background: #A0522D;
 }
 
-.movement-controls {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 5px;
-    width: 150px;
-}
-
 .movement-controls button {
     padding: 10px;
 }
 
 .movement-controls .spacer {
     visibility: hidden;
-}
-
-.status {
-    margin-top: 20px;
-}
-
-.game-row {
-    display: flex;
-    margin-bottom: 20px;
 }
 
 .messages {

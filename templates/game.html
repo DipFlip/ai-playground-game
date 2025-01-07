@@ -42,10 +42,25 @@
             </div>
             
             <div class="controls">
-                <div class="audio-control">
-                    <button id="audio-toggle" class="control-button">
-                        🔊 Sound On
-                    </button>
+                <div class="movement-controls">
+                    <div class="spacer"></div>
+                    <button class="movement-button" data-direction="north">North</button>
+                    <div class="spacer"></div>
+                    <button class="movement-button" data-direction="west">West</button>
+                    <button onclick="interact(); this.blur()">Interact</button>
+                    <button class="movement-button" data-direction="east">East</button>
+                    <div class="spacer"></div>
+                    <button class="movement-button" data-direction="south">South</button>
+                    <div class="spacer"></div>
+                </div>
+
+                <div class="status">
+                    <h3>Inventory:</h3>
+                    <div id="inventory">
+                        {% for item, amount in character.inventory.items() %}
+                            <p>{{ item }}: <span id="item-{{ item }}">{{ amount }}</span></p>
+                        {% endfor %}
+                    </div>
                 </div>
 
                 <div id="npc-creator">
@@ -60,30 +75,17 @@
                     </div>
                 </div>
 
-                <div class="movement-controls">
-                    <div class="spacer"></div>
-                    <button class="movement-button" data-direction="north">North</button>
-                    <div class="spacer"></div>
-                    <button class="movement-button" data-direction="west">West</button>
-                    <button onclick="interact(); this.blur()">Interact</button>
-                    <button class="movement-button" data-direction="east">East</button>
-                    <div class="spacer"></div>
-                    <button class="movement-button" data-direction="south">South</button>
-                    <div class="spacer"></div>
+                <div class="audio-control">
+                    <button id="audio-toggle" class="control-button">
+                        🔊 Sound On
+                    </button>
                 </div>
-                
-                <div class="status">
+
+                <div class="position-display">
                     <h3>Position:</h3>
                     <div id="position">
                         X: <span id="pos-x">{{ character.x }}</span>, 
                         Y: <span id="pos-y">{{ character.y }}</span>
-                    </div>
-                    
-                    <h3>Inventory:</h3>
-                    <div id="inventory">
-                        {% for item, amount in character.inventory.items() %}
-                            <p>{{ item }}: <span id="item-{{ item }}">{{ amount }}</span></p>
-                        {% endfor %}
                     </div>
                 </div>
             </div>
