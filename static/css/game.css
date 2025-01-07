@@ -323,4 +323,78 @@ body {
 .messages p {
     margin: 5px 0;
     line-height: 1.5;
+}
+
+/* Responsive Layout */
+@media (max-width: 1024px) {
+    .game-row {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .world-grid {
+        margin-right: 0;
+        margin-bottom: 20px;
+        width: 100%;
+        max-width: 800px;
+        height: auto;
+        aspect-ratio: 1;
+    }
+
+    .controls {
+        width: 100%;
+        max-width: 800px;
+        align-items: center;
+    }
+
+    .movement-controls {
+        width: 200px;
+        margin: 20px 0;
+    }
+
+    .status {
+        width: 100%;
+        text-align: center;
+    }
+
+    #inventory {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    #inventory p {
+        margin: 0;
+    }
+
+    .audio-control, #npc-creator {
+        width: 200px;
+    }
+}
+
+@media (max-width: 850px) {
+    .world-grid {
+        border-width: 1px;
+    }
+
+    .conversation-window {
+        margin: 10px;
+        padding: 10px;
+        border-width: 4px;
+    }
+
+    .messages {
+        height: 100px;
+    }
+
+    .choice-button {
+        font-size: 1rem;
+        padding: 6px 12px 6px 25px;
+    }
+
+    .choice-button.selected::before {
+        left: 8px;
+        font-size: 1rem;
+    }
 } 
