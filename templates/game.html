@@ -303,34 +303,25 @@
                     return;
                 }
                 
-                // Get current position before moving
+                // Update position immediately after server confirmation
                 const character = document.getElementById('character');
-                const currentLeft = parseFloat(character.style.left);
-                const currentTop = parseFloat(character.style.top);
+                character.style.left = (data.x * 40 + 420) + 'px';
+                character.style.top = (data.y * 40 + 420) + 'px';
+                character.innerHTML = data.emoji;
                 
-                // Calculate target position
-                const targetLeft = data.x * 40 + 420;
-                const targetTop = data.y * 40 + 420;
+                // Update position display
+                document.getElementById('pos-x').textContent = data.x;
+                document.getElementById('pos-y').textContent = data.y;
                 
-                // Only update position if it actually changed
-                if (currentLeft !== targetLeft || currentTop !== targetTop) {
-                    character.style.left = targetLeft + 'px';
-                    character.style.top = targetTop + 'px';
-                    character.innerHTML = data.emoji;
-                    
-                    // Update position display after animation completes
-                    setTimeout(() => {
-                        document.getElementById('pos-x').textContent = data.x;
-                        document.getElementById('pos-y').textContent = data.y;
-                        // Save state and clear moving flag after position update
-                        if (data.gameState) {
-                            saveGameState(data.gameState);
-                        }
-                        isMoving = false;
-                    }, 200);  // Match this with your CSS transition duration
-                } else {
-                    isMoving = false;
+                // Save state
+                if (data.gameState) {
+                    saveGameState(data.gameState);
                 }
+                
+                // Clear moving flag after everything is updated
+                setTimeout(() => {
+                    isMoving = false;
+                }, 200);  // Match this with your CSS transition duration
             })
             .catch(error => {
                 console.error('Error:', error);

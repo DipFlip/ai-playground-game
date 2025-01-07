@@ -1,5 +1,6 @@
 from flask import Flask, render_template, jsonify, request, send_file
 from world import World, DYNAMIC_NPCS, NPC_POSITIONS, PLAYER_STATE
+from npc import NPC
 import os
 from character_generator import create_character
 import yaml
@@ -13,9 +14,24 @@ def load_state_from_request():
     if request.is_json and request.json.get('savedState'):
         saved_state = request.json['savedState']
         if saved_state.get('player'):
-            PLAYER_STATE.update(saved_state['player'])
+            player_state = saved_state['player']
+            PLAYER_STATE.update(player_state)
+            # Sync game world character position with saved state
+            game_world.character.x = player_state['x']
+            game_world.character.y = player_state['y']
+            
         if saved_state.get('npcPositions'):
             NPC_POSITIONS.update(saved_state['npcPositions'])
+            # Sync NPC positions with saved state
+            for location in game_world.locations:
+                if isinstance(location, NPC):
+                    npc_id = next((id for id, pos in saved_state['npcPositions'].items() 
+                                 if (isinstance(id, str) and id.startswith('dynamic_') and location.name == f'dynamic_{id.split("_")[1]}') 
+                                 or (location.name == id.replace('.yaml', ''))), None)
+                    if npc_id and npc_id in saved_state['npcPositions']:
+                        location.x = saved_state['npcPositions'][npc_id]['x']
+                        location.y = saved_state['npcPositions'][npc_id]['y']
+            
         if saved_state.get('dynamicNpcs'):
             DYNAMIC_NPCS.clear()
             DYNAMIC_NPCS.extend(saved_state['dynamicNpcs'])
@@ -106,17 +122,29 @@ def game_state():
     if request.is_json and request.json.get('savedState'):
         saved_state = request.json['savedState']
         if saved_state.get('player'):
-            # Don't override player position during periodic updates
-            # Only update inventory and other state
             player_state = saved_state['player']
-            PLAYER_STATE['inventory'] = player_state.get('inventory', {})
+            PLAYER_STATE.update(player_state)
+            # Sync game world character position with saved state
+            game_world.character.x = player_state['x']
+            game_world.character.y = player_state['y']
+            
         if saved_state.get('npcPositions'):
             NPC_POSITIONS.update(saved_state['npcPositions'])
+            # Sync NPC positions with saved state
+            for location in game_world.locations:
+                if isinstance(location, NPC):
+                    npc_id = next((id for id, pos in saved_state['npcPositions'].items() 
+                                 if (isinstance(id, str) and id.startswith('dynamic_') and location.name == f'dynamic_{id.split("_")[1]}') 
+                                 or (location.name == id.replace('.yaml', ''))), None)
+                    if npc_id and npc_id in saved_state['npcPositions']:
+                        location.x = saved_state['npcPositions'][npc_id]['x']
+                        location.y = saved_state['npcPositions'][npc_id]['y']
+                        
         if saved_state.get('dynamicNpcs'):
             DYNAMIC_NPCS.clear()
             DYNAMIC_NPCS.extend(saved_state['dynamicNpcs'])
     
-    # Only update NPCs, don't touch player position
+    # Update NPCs
     game_world.update_npcs()  # Update world state including NPC movements
     
     return create_state_response({
