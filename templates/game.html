@@ -352,6 +352,19 @@
 
             // Show/hide conversation window based on if we're talking
             conversationWindow.style.display = data.is_talking ? 'block' : 'none';
+            
+            // Clear any remaining message timeouts when hiding the window
+            if (!data.is_talking) {
+                const allMessages = messages.querySelectorAll('p');
+                allMessages.forEach(message => {
+                    if (message.messageTimeouts) {
+                        message.messageTimeouts.forEach(timeout => clearTimeout(timeout));
+                        message.querySelectorAll('.message-char').forEach(span => {
+                            span.classList.add('visible');
+                        });
+                    }
+                });
+            }
 
             // Show/hide input based on if we're waiting for input
             inputContainer.style.display = data.waitingForInput ? 'block' : 'none';
@@ -497,6 +510,7 @@
                 const charDelay = isMovement ? 15 : 30; // Faster animation for movement messages
                 const visibilityDelay = 20;
                 let charCount = 0;
+                let messageTimeouts = []; // Track timeouts for this message
                 
                 // Split the message into characters and create spans
                 [...lastMessage].forEach((char, index) => {
@@ -506,7 +520,7 @@
                     span.style.animationDelay = `${delay}ms`;
                     newP.appendChild(span);
                     
-                    setTimeout(() => {
+                    const timeout = setTimeout(() => {
                         span.classList.add('visible');
                         // Play sound every 2 non-space characters for dialogue messages
                         if (!isMovement && char !== ' ') {
@@ -516,9 +530,23 @@
                             }
                         }
                     }, delay + visibilityDelay);
+                    messageTimeouts.push(timeout);
                     
                     delay += charDelay;
                 });
+
+                // Store timeouts on the paragraph element so we can clear them if needed
+                newP.messageTimeouts = messageTimeouts;
+
+                // Clear previous message timeouts if they exist
+                const prevMessage = messagesDiv.querySelector('p:nth-last-child(2)');
+                if (prevMessage && prevMessage.messageTimeouts) {
+                    prevMessage.messageTimeouts.forEach(timeout => clearTimeout(timeout));
+                    // Make all characters of the previous message visible immediately
+                    prevMessage.querySelectorAll('.message-char').forEach(span => {
+                        span.classList.add('visible');
+                    });
+                }
                 
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             } else {
