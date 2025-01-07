@@ -102,11 +102,13 @@ def move():
 
 @app.route('/game_state', methods=['GET', 'POST'])
 def game_state():
-    # For game state updates, we only want to load dynamic NPCs and player state, not positions
+    # Load all state from the request
     if request.is_json and request.json.get('savedState'):
         saved_state = request.json['savedState']
         if saved_state.get('player'):
             PLAYER_STATE.update(saved_state['player'])
+        if saved_state.get('npcPositions'):
+            NPC_POSITIONS.update(saved_state['npcPositions'])
         if saved_state.get('dynamicNpcs'):
             DYNAMIC_NPCS.clear()
             DYNAMIC_NPCS.extend(saved_state['dynamicNpcs'])
