@@ -53,9 +53,9 @@ class NPC(Character):
         self.name = name
         self.personality = ""
         self.needs_position = False  # Flag to indicate if we need a position from the world
-        self.last_wander_time = time.time() + random.uniform(0, 5)  # Random initial offset
+        self.last_wander_time = time.time() + random.uniform(0, 10)  # Longer random initial offset
         self.wander_interval = wander_interval  # Default wander interval in seconds
-        self.wander_interval_offset = random.uniform(-2, 2)  # Random offset to interval
+        self.wander_interval_offset = random.uniform(-0.5, 0.5)  # Smaller random offset
         self.should_wander = should_wander  # Whether this NPC should wander
 
     @property

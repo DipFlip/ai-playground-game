@@ -102,8 +102,14 @@ def move():
 
 @app.route('/game_state', methods=['GET', 'POST'])
 def game_state():
-    # Load saved state if it exists
-    load_state_from_request()
+    # For game state updates, we only want to load dynamic NPCs and player state, not positions
+    if request.is_json and request.json.get('savedState'):
+        saved_state = request.json['savedState']
+        if saved_state.get('player'):
+            PLAYER_STATE.update(saved_state['player'])
+        if saved_state.get('dynamicNpcs'):
+            DYNAMIC_NPCS.clear()
+            DYNAMIC_NPCS.extend(saved_state['dynamicNpcs'])
     
     # Always update NPCs, they should still wander
     game_world.update()  # Update world state including NPC movements

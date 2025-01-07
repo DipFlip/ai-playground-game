@@ -88,7 +88,7 @@ class World:
                 if location.try_wander(self, current_time):
                     # If NPC moved, update its position in memory
                     npc_id = f"dynamic_{i}" if i >= len(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'npcs', '*.yaml'))) else os.path.basename(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'npcs', '*.yaml'))[i])
-                    NPC_POSITIONS[npc_id] = {'x': location.x, 'y': location.y}
+                    NPC_POSITIONS[npc_id] = {'x': location.x, 'y': location.y, 'last_update': current_time}
                     # Print debug info
                     print(f"NPC {location.name} moved to {location.x}, {location.y}")
         
