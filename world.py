@@ -84,10 +84,13 @@ class World:
         # Update NPCs and their positions in memory
         for i, location in enumerate(self.locations):
             if isinstance(location, NPC):
+                # Try to make the NPC wander
                 if location.try_wander(self, current_time):
                     # If NPC moved, update its position in memory
                     npc_id = f"dynamic_{i}" if i >= len(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'npcs', '*.yaml'))) else os.path.basename(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'npcs', '*.yaml'))[i])
                     NPC_POSITIONS[npc_id] = {'x': location.x, 'y': location.y}
+                    # Print debug info
+                    print(f"NPC {location.name} moved to {location.x}, {location.y}")
         
         # Update player state in memory
         PLAYER_STATE['x'] = self.character.x

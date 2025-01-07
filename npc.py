@@ -144,20 +144,24 @@ class NPC(Character):
         if not self.should_wander or self.is_talking:
             return False
 
+        # Check if enough time has passed since last wander
         actual_interval = self.wander_interval + self.wander_interval_offset
-        if current_time - self.last_wander_time >= actual_interval:
-            # Choose a random direction
-            directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-            dx, dy = random.choice(directions)
-            new_x, new_y = self.x + dx, self.y + dy
+        time_since_last = current_time - self.last_wander_time
+        if time_since_last < actual_interval:
+            return False
 
-            # Check if the new position is valid and unoccupied
-            if world.can_move_to(new_x, new_y) and not world.get_location_at(new_x, new_y):
-                self.x = new_x
-                self.y = new_y
-                self.last_wander_time = current_time
-                # Add some randomness to next interval
-                self.wander_interval_offset = random.uniform(-2, 2)
-                return True
+        # Choose a random direction
+        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        dx, dy = random.choice(directions)
+        new_x, new_y = self.x + dx, self.y + dy
+
+        # Check if the new position is valid and unoccupied
+        if world.can_move_to(new_x, new_y) and not world.get_location_at(new_x, new_y):
+            self.x = new_x
+            self.y = new_y
+            self.last_wander_time = current_time
+            # Add some randomness to next interval
+            self.wander_interval_offset = random.uniform(-1, 1)  # Reduced randomness
+            return True
 
         return False

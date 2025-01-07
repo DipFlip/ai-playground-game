@@ -105,7 +105,9 @@ def game_state():
     # Load saved state if it exists
     load_state_from_request()
     
+    # Always update NPCs, they should still wander
     game_world.update()  # Update world state including NPC movements
+    
     return create_state_response({
         'character': {
             'x': game_world.character.x,
