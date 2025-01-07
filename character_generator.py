@@ -1,14 +1,21 @@
 import json
 import yaml
 from openai import OpenAI
+import os
 import dotenv
 from npc_schema import NPC_FUNCTIONS
 from sequence_schema import SEQUENCE_FUNCTIONS
 
-dotenv.load_dotenv()
+# Try to load from .env file, but don't fail if it doesn't exist
+try:
+    dotenv.load_dotenv()
+except:
+    pass
 
-# Initialize OpenAI client
-client = OpenAI()
+# Initialize OpenAI client with explicit API key from environment
+client = OpenAI(
+    api_key=os.getenv('OPENAI_API_KEY')
+)
 
 def create_sequence(prompt):
     """
