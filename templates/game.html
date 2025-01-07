@@ -599,13 +599,32 @@
                     locationDiv.id = locationId;
                     locationDiv.className = `location ${location.type.toLowerCase()}`;
                     locationDiv.title = location.type;
+                    // Set initial position without transition
+                    locationDiv.style.transition = 'none';
+                    locationDiv.style.left = (location.x * 40 + 420) + 'px';
+                    locationDiv.style.top = (location.y * 40 + 420) + 'px';
+                    locationDiv.innerHTML = location.emoji;
                     worldGrid.appendChild(locationDiv);
+                    // Force reflow to ensure the initial position is set
+                    locationDiv.offsetHeight;
+                    // Re-enable transitions
+                    locationDiv.style.transition = '';
+                } else {
+                    // Get current position
+                    const currentLeft = parseFloat(locationDiv.style.left);
+                    const currentTop = parseFloat(locationDiv.style.top);
+                    const targetLeft = location.x * 40 + 420;
+                    const targetTop = location.y * 40 + 420;
+                    
+                    // Only update if position actually changed and change is small
+                    const maxJump = 80; // Maximum allowed position change (2 grid cells)
+                    if (Math.abs(currentLeft - targetLeft) <= maxJump && 
+                        Math.abs(currentTop - targetTop) <= maxJump) {
+                        locationDiv.style.left = targetLeft + 'px';
+                        locationDiv.style.top = targetTop + 'px';
+                        locationDiv.innerHTML = location.emoji;
+                    }
                 }
-                
-                // Update position and emoji with smooth transition
-                locationDiv.style.left = (location.x * 40 + 420) + 'px';
-                locationDiv.style.top = (location.y * 40 + 420) + 'px';
-                locationDiv.innerHTML = location.emoji;
             });
             
             // Remove any locations that no longer exist
