@@ -1,9 +1,13 @@
 from flask import Flask, render_template, jsonify, request, send_file
 from world import World
 import os
+import dotenv
 from character_generator import create_character
 import yaml
 import uuid
+
+# Load environment variables
+dotenv.load_dotenv()
 
 app = Flask(__name__)
 
