@@ -7,6 +7,9 @@ import glob
 import random
 import time
 
+# Global in-memory storage for dynamically created NPCs
+DYNAMIC_NPCS = []
+
 class World:
     def __init__(self):
         self.character = Character(0, 0)
@@ -25,13 +28,24 @@ class World:
         self.center_x = int(self.map_width // 2)
         self.center_y = int(self.map_height // 2)
         
-        # Now load NPCs after map setup is complete
-        npc_path = os.path.join(base_path, 'npcs', '*.yaml')
+        # Load NPCs from files and memory
         self.locations = []
+        
+        # Load static NPCs from files
+        npc_path = os.path.join(base_path, 'npcs', '*.yaml')
         for npc_file in glob.glob(npc_path):
             npc = NPC.from_yaml(npc_file)
             if npc.needs_position:
                 # Find a suitable position for the NPC
+                x, y = self.find_random_position()
+                npc.x = x
+                npc.y = y
+            self.locations.append(npc)
+        
+        # Load dynamic NPCs from memory
+        for npc_data in DYNAMIC_NPCS:
+            npc = NPC.from_yaml_data(npc_data)
+            if npc.needs_position:
                 x, y = self.find_random_position()
                 npc.x = x
                 npc.y = y

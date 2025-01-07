@@ -12,7 +12,10 @@ class NPC(Character):
     def from_yaml(cls, yaml_path: str) -> 'NPC':
         with open(yaml_path, 'r') as f:
             data = yaml.safe_load(f)
-        
+        return cls.from_yaml_data(data)
+    
+    @classmethod
+    def from_yaml_data(cls, data: dict) -> 'NPC':
         npc_data = data['npc']
         sequence_data = data['sequence']
         

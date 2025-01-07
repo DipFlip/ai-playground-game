@@ -1,5 +1,5 @@
 from flask import Flask, render_template, jsonify, request, send_file
-from world import World
+from world import World, DYNAMIC_NPCS
 import os
 from character_generator import create_character
 import yaml
@@ -136,18 +136,11 @@ def create_npc():
         if not yaml_content:
             return jsonify({'success': False, 'error': 'Failed to generate NPC'})
         
-        # Create a unique filename for the NPC
-        npc_filename = f"npc_{uuid.uuid4().hex[:8]}.yaml"
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        npc_dir = os.path.join(base_path, 'npcs')
+        # Parse the YAML content
+        npc_data = yaml.safe_load(yaml_content)
         
-        # Create npcs directory if it doesn't exist
-        os.makedirs(npc_dir, exist_ok=True)
-        
-        # Save the YAML file
-        npc_path = os.path.join(npc_dir, npc_filename)
-        with open(npc_path, 'w', encoding='utf-8') as f:
-            f.write(yaml_content)
+        # Add to in-memory storage
+        DYNAMIC_NPCS.append(npc_data)
         
         # Reload the world to include the new NPC
         global game_world
