@@ -303,36 +303,55 @@
             })
             .then(response => response.json())
             .then(data => {
+                const character = document.getElementById('character');
+                
+                // Always update character state to match server
+                character.innerHTML = data.emoji;
+                
+                // If movement is not allowed, clear the flag and return immediately
                 if (!data.canMove) {
                     isMoving = false;
                     return;
                 }
                 
-                // Update position after server confirmation
-                const character = document.getElementById('character');
+                // Get current position before updating
+                const currentLeft = parseFloat(character.style.left) || (data.x * 40 + 420);
+                const currentTop = parseFloat(character.style.top) || (data.y * 40 + 420);
+                const newLeft = data.x * 40 + 420;
+                const newTop = data.y * 40 + 420;
                 
-                // Start the transition
-                character.style.left = (data.x * 40 + 420) + 'px';
-                character.style.top = (data.y * 40 + 420) + 'px';
-                character.innerHTML = data.emoji;
-                
-                // Wait for the transition to complete before updating state
-                character.addEventListener('transitionend', function onTransitionEnd() {
-                    // Update position display
+                // Only add transition listener if position actually changes
+                if (currentLeft !== newLeft || currentTop !== newTop) {
+                    // Start the transition
+                    character.style.left = newLeft + 'px';
+                    character.style.top = newTop + 'px';
+                    
+                    // Wait for the transition to complete before updating state
+                    character.addEventListener('transitionend', function onTransitionEnd() {
+                        // Update position display
+                        document.getElementById('pos-x').textContent = data.x;
+                        document.getElementById('pos-y').textContent = data.y;
+                        
+                        // Save state only after animation is complete
+                        if (data.gameState) {
+                            saveGameState(data.gameState);
+                        }
+                        
+                        // Clear moving flag after everything is complete
+                        isMoving = false;
+                        
+                        // Remove the event listener
+                        character.removeEventListener('transitionend', onTransitionEnd);
+                    }, { once: true }); // Use once: true to ensure the listener is automatically removed
+                } else {
+                    // If no actual movement, clear flag immediately
                     document.getElementById('pos-x').textContent = data.x;
                     document.getElementById('pos-y').textContent = data.y;
-                    
-                    // Save state only after animation is complete
                     if (data.gameState) {
                         saveGameState(data.gameState);
                     }
-                    
-                    // Clear moving flag after everything is complete
                     isMoving = false;
-                    
-                    // Remove the event listener
-                    character.removeEventListener('transitionend', onTransitionEnd);
-                }, { once: true }); // Use once: true to ensure the listener is automatically removed
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
