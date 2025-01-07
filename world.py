@@ -6,6 +6,11 @@ import os
 import glob
 import random
 import time
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Global in-memory storage for all dynamic state
 DYNAMIC_NPCS = []
@@ -89,8 +94,8 @@ class World:
                     # If NPC moved, update its position in memory
                     npc_id = f"dynamic_{i}" if i >= len(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'npcs', '*.yaml'))) else os.path.basename(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'npcs', '*.yaml'))[i])
                     NPC_POSITIONS[npc_id] = {'x': location.x, 'y': location.y}
-                    # Print debug info
-                    print(f"NPC {location.name} moved to {location.x}, {location.y}")
+                    # Log debug info instead of printing
+                    logger.debug(f"NPC {location.name} moved to {location.x}, {location.y}")
                 # Always update position in memory even if NPC didn't move
                 else:
                     npc_id = f"dynamic_{i}" if i >= len(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'npcs', '*.yaml'))) else os.path.basename(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'npcs', '*.yaml'))[i])

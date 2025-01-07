@@ -6,6 +6,12 @@ from character_generator import create_character
 import yaml
 import uuid
 import json
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+# Reduce Werkzeug logger verbosity
+logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
 app = Flask(__name__)
 
