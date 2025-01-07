@@ -92,6 +92,48 @@
     </div>
 
     <script>
+        // State management functions
+        function saveGameState(state) {
+            localStorage.setItem('gameState', JSON.stringify(state));
+        }
+
+        function loadGameState() {
+            const state = localStorage.getItem('gameState');
+            return state ? JSON.parse(state) : null;
+        }
+
+        // Initialize state from localStorage or use defaults
+        const savedState = loadGameState();
+        if (savedState) {
+            // Update initial character position and inventory
+            const character = document.getElementById('character');
+            character.style.left = (savedState.player.x * 40 + 420) + 'px';
+            character.style.top = (savedState.player.y * 40 + 420) + 'px';
+            document.getElementById('pos-x').textContent = savedState.player.x;
+            document.getElementById('pos-y').textContent = savedState.player.y;
+            
+            // Update inventory display
+            const inventoryDiv = document.getElementById('inventory');
+            if (savedState.player.inventory) {
+                inventoryDiv.innerHTML = Object.entries(savedState.player.inventory)
+                    .map(([item, amount]) => `<p>${item}: <span id="item-${item}">${amount}</span></p>`)
+                    .join('');
+            }
+
+            // Update NPC positions if they exist
+            if (savedState.npcPositions) {
+                // We'll get the full NPC data in the next game state update
+                // This just ensures they're not jumping around on page load
+                const locations = Object.entries(savedState.npcPositions).map(([id, pos]) => ({
+                    name: id.replace('.yaml', ''),
+                    x: pos.x,
+                    y: pos.y,
+                    type: 'NPC'
+                }));
+                updateNPCPositions(locations);
+            }
+        }
+
         // Initialize audio objects for each sound
         const sounds = {
             'a': new Audio('/sounds/a.ogg'),
@@ -127,54 +169,33 @@
 
         // Add periodic game state update
         setInterval(function() {
-            fetch('/game_state')
-                .then(response => response.json())
-                .then(data => {
-                    // Update character position
-                    const character = document.getElementById('character');
-                    character.style.left = (data.character.x * 40 + 420) + 'px';
-                    character.style.top = (data.character.y * 40 + 420) + 'px';
-                    character.innerHTML = data.character.emoji;
-                    
-                    // Update NPC positions
-                    const worldGrid = document.querySelector('.world-grid');
-                    
-                    // Update or create NPCs
-                    data.locations.forEach(location => {
-                        const locationId = `location-${location.name || location.type.toLowerCase()}`;
-                        let locationDiv = document.getElementById(locationId);
-                        
-                        if (!locationDiv) {
-                            // Create new location element if it doesn't exist
-                            locationDiv = document.createElement('div');
-                            locationDiv.id = locationId;
-                            locationDiv.className = `location ${location.type.toLowerCase()}`;
-                            locationDiv.title = location.type;
-                            worldGrid.appendChild(locationDiv);
-                        }
-                        
-                        // Update position and emoji with smooth transition
-                        locationDiv.style.left = (location.x * 40 + 420) + 'px';
-                        locationDiv.style.top = (location.y * 40 + 420) + 'px';
-                        locationDiv.innerHTML = location.emoji;
-                    });
-                    
-                    // Remove any locations that no longer exist
-                    const existingLocations = document.querySelectorAll('.location');
-                    existingLocations.forEach(loc => {
-                        const locId = loc.id;
-                        const stillExists = data.locations.some(newLoc => 
-                            locId === `location-${newLoc.name || newLoc.type.toLowerCase()}`
-                        );
-                        if (!stillExists) {
-                            loc.remove();
-                        }
-                    });
-                    
-                    // Update position display
-                    document.getElementById('pos-x').textContent = data.character.x;
-                    document.getElementById('pos-y').textContent = data.character.y;
-                });
+            fetch('/game_state', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    savedState: loadGameState()  // Send current state to server
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update character position
+                const character = document.getElementById('character');
+                character.style.left = (data.character.x * 40 + 420) + 'px';
+                character.style.top = (data.character.y * 40 + 420) + 'px';
+                character.innerHTML = data.character.emoji;
+                
+                // Update NPC positions
+                updateNPCPositions(data.locations);
+                
+                // Update position display
+                document.getElementById('pos-x').textContent = data.character.x;
+                document.getElementById('pos-y').textContent = data.character.y;
+
+                // Save updated state
+                saveGameState(data.gameState);
+            });
         }, 1000);  // Update every second
 
         // Add keyboard event listener
@@ -261,7 +282,10 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ direction: direction }),
+                body: JSON.stringify({ 
+                    direction: direction,
+                    savedState: loadGameState()  // Send current state to server
+                }),
             })
             .then(response => response.json())
             .then(data => {
@@ -291,6 +315,9 @@
                         updateInventory(data);
                     }, 200); // Match the CSS transition duration
                 }
+
+                // Save updated state
+                saveGameState(data.gameState);
             });
         }
 
@@ -360,10 +387,16 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({})
+                body: JSON.stringify({
+                    savedState: loadGameState()  // Send current state to server
+                })
             })
             .then(response => response.json())
-            .then(handleInteractionResponse);
+            .then(data => {
+                handleInteractionResponse(data);
+                // Save updated state
+                saveGameState(data.gameState);
+            });
         }
 
         function submitAnswer() {
@@ -376,10 +409,17 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ answer: answer })
+                body: JSON.stringify({ 
+                    answer: answer,
+                    savedState: loadGameState()  // Send current state to server
+                })
             })
             .then(response => response.json())
-            .then(handleInteractionResponse);
+            .then(data => {
+                handleInteractionResponse(data);
+                // Save updated state
+                saveGameState(data.gameState);
+            });
         }
 
         // Add event listener for Enter key on input
@@ -404,6 +444,11 @@
                 const p = document.createElement('p');
                 p.innerHTML = `${item}: <span id="item-${item}">${amount}</span>`;
                 inventoryDiv.appendChild(p);
+            }
+
+            // Save state if it exists in the data
+            if (data.gameState) {
+                saveGameState(data.gameState);
             }
         }
 
@@ -495,11 +540,18 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ description: description })
+                body: JSON.stringify({ 
+                    description: description,
+                    savedState: loadGameState()  // Send current state to server
+                })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Save state before reloading
+                    if (data.gameState) {
+                        saveGameState(data.gameState);
+                    }
                     alert('NPC created successfully!');
                     location.reload(); // Reload to show the new NPC
                 } else {
@@ -511,6 +563,42 @@
             .catch(error => {
                 console.error('Error:', error);
                 alert('Error creating NPC');
+            });
+        }
+
+        function updateNPCPositions(locations) {
+            const worldGrid = document.querySelector('.world-grid');
+            
+            // Update or create NPCs
+            locations.forEach(location => {
+                const locationId = `location-${location.name || location.type.toLowerCase()}`;
+                let locationDiv = document.getElementById(locationId);
+                
+                if (!locationDiv) {
+                    // Create new location element if it doesn't exist
+                    locationDiv = document.createElement('div');
+                    locationDiv.id = locationId;
+                    locationDiv.className = `location ${location.type.toLowerCase()}`;
+                    locationDiv.title = location.type;
+                    worldGrid.appendChild(locationDiv);
+                }
+                
+                // Update position and emoji with smooth transition
+                locationDiv.style.left = (location.x * 40 + 420) + 'px';
+                locationDiv.style.top = (location.y * 40 + 420) + 'px';
+                locationDiv.innerHTML = location.emoji;
+            });
+            
+            // Remove any locations that no longer exist
+            const existingLocations = document.querySelectorAll('.location');
+            existingLocations.forEach(loc => {
+                const locId = loc.id;
+                const stillExists = locations.some(newLoc => 
+                    locId === `location-${newLoc.name || newLoc.type.toLowerCase()}`
+                );
+                if (!stillExists) {
+                    loc.remove();
+                }
             });
         }
     </script>
