@@ -283,6 +283,9 @@
         });
 
         function move(direction) {
+            // Don't allow movement if we're already moving
+            if (isMoving) return;
+            
             // Set moving flag
             isMoving = true;
 
@@ -303,25 +306,31 @@
                     return;
                 }
                 
-                // Update position immediately after server confirmation
+                // Update position after server confirmation
                 const character = document.getElementById('character');
+                
+                // Start the transition
                 character.style.left = (data.x * 40 + 420) + 'px';
                 character.style.top = (data.y * 40 + 420) + 'px';
                 character.innerHTML = data.emoji;
                 
-                // Update position display
-                document.getElementById('pos-x').textContent = data.x;
-                document.getElementById('pos-y').textContent = data.y;
-                
-                // Save state
-                if (data.gameState) {
-                    saveGameState(data.gameState);
-                }
-                
-                // Clear moving flag after everything is updated
-                setTimeout(() => {
+                // Wait for the transition to complete before updating state
+                character.addEventListener('transitionend', function onTransitionEnd() {
+                    // Update position display
+                    document.getElementById('pos-x').textContent = data.x;
+                    document.getElementById('pos-y').textContent = data.y;
+                    
+                    // Save state only after animation is complete
+                    if (data.gameState) {
+                        saveGameState(data.gameState);
+                    }
+                    
+                    // Clear moving flag after everything is complete
                     isMoving = false;
-                }, 200);  // Match this with your CSS transition duration
+                    
+                    // Remove the event listener
+                    character.removeEventListener('transitionend', onTransitionEnd);
+                }, { once: true }); // Use once: true to ensure the listener is automatically removed
             })
             .catch(error => {
                 console.error('Error:', error);
