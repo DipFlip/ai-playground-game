@@ -106,15 +106,18 @@ def game_state():
     if request.is_json and request.json.get('savedState'):
         saved_state = request.json['savedState']
         if saved_state.get('player'):
-            PLAYER_STATE.update(saved_state['player'])
+            # Don't override player position during periodic updates
+            # Only update inventory and other state
+            player_state = saved_state['player']
+            PLAYER_STATE['inventory'] = player_state.get('inventory', {})
         if saved_state.get('npcPositions'):
             NPC_POSITIONS.update(saved_state['npcPositions'])
         if saved_state.get('dynamicNpcs'):
             DYNAMIC_NPCS.clear()
             DYNAMIC_NPCS.extend(saved_state['dynamicNpcs'])
     
-    # Always update NPCs, they should still wander
-    game_world.update()  # Update world state including NPC movements
+    # Only update NPCs, don't touch player position
+    game_world.update_npcs()  # Update world state including NPC movements
     
     return create_state_response({
         'character': {

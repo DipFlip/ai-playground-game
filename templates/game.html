@@ -167,8 +167,14 @@
             randomSound.play().catch(e => console.log('Audio play failed:', e));
         }
 
+        // Add movement lock to prevent race conditions
+        let isMoving = false;
+
         // Add periodic game state update
         setInterval(function() {
+            // Skip state update if we're in the middle of a movement
+            if (isMoving) return;
+
             fetch('/game_state', {
                 method: 'POST',
                 headers: {
@@ -277,6 +283,9 @@
         });
 
         function move(direction) {
+            // Set moving flag
+            isMoving = true;
+
             fetch('/move', {
                 method: 'POST',
                 headers: {
@@ -290,6 +299,7 @@
             .then(response => response.json())
             .then(data => {
                 if (!data.canMove) {
+                    isMoving = false;
                     return;
                 }
                 
@@ -312,12 +322,19 @@
                     setTimeout(() => {
                         document.getElementById('pos-x').textContent = data.x;
                         document.getElementById('pos-y').textContent = data.y;
-                        updateInventory(data);
-                    }, 200); // Match the CSS transition duration
+                        // Save state and clear moving flag after position update
+                        if (data.gameState) {
+                            saveGameState(data.gameState);
+                        }
+                        isMoving = false;
+                    }, 200);  // Match this with your CSS transition duration
+                } else {
+                    isMoving = false;
                 }
-
-                // Save updated state
-                saveGameState(data.gameState);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                isMoving = false;
             });
         }
 

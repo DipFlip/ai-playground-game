@@ -77,8 +77,8 @@ class World:
         # Initialize last update time
         self.last_update_time = time.time()
 
-    def update(self):
-        """Update the world state, including NPC movements."""
+    def update_npcs(self):
+        """Update only NPC states and positions, leaving player state unchanged."""
         current_time = time.time()
         
         # Update NPCs and their positions in memory
@@ -96,12 +96,16 @@ class World:
                     npc_id = f"dynamic_{i}" if i >= len(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'npcs', '*.yaml'))) else os.path.basename(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'npcs', '*.yaml'))[i])
                     NPC_POSITIONS[npc_id] = {'x': location.x, 'y': location.y}
         
+        self.last_update_time = current_time
+
+    def update(self):
+        """Update the world state, including NPC movements and player state."""
+        self.update_npcs()
+        
         # Update player state in memory
         PLAYER_STATE['x'] = self.character.x
         PLAYER_STATE['y'] = self.character.y
         PLAYER_STATE['inventory'] = self.character.inventory.copy()
-        
-        self.last_update_time = current_time
 
     def get_location_at(self, x: int, y: int):
         for location in self.locations:
