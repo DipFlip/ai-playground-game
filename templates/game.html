@@ -38,6 +38,10 @@
                             <button id="submit-answer">Submit</button>
                         </div>
                     </div>
+
+                    <div class="loading-overlay" id="conversation-loading">
+                        <div class="spinner"></div>
+                    </div>
                 </div>
             </div>
             
@@ -71,6 +75,9 @@
                             <h2>Create New NPC</h2>
                             <textarea id="npc-description" placeholder="Describe the NPC you want to create..."></textarea>
                             <button id="create-npc">Create NPC</button>
+                            <div class="loading-overlay" id="npc-loading">
+                                <div class="spinner"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -457,6 +464,9 @@
             const answer = input.value;
             input.value = '';  // Clear the input
             
+            // Show loading spinner
+            document.getElementById('conversation-loading').classList.add('visible');
+            
             fetch('/interact', {
                 method: 'POST',
                 headers: {
@@ -469,9 +479,16 @@
             })
             .then(response => response.json())
             .then(data => {
+                // Hide loading spinner
+                document.getElementById('conversation-loading').classList.remove('visible');
                 handleInteractionResponse(data);
                 // Save updated state
                 saveGameState(data.gameState);
+            })
+            .catch(error => {
+                // Hide loading spinner on error
+                document.getElementById('conversation-loading').classList.remove('visible');
+                console.error('Error:', error);
             });
         }
 
@@ -603,6 +620,9 @@
                 return;
             }
 
+            // Show loading spinner
+            document.getElementById('npc-loading').classList.add('visible');
+
             fetch('/create_npc', {
                 method: 'POST',
                 headers: {
@@ -615,6 +635,9 @@
             })
             .then(response => response.json())
             .then(data => {
+                // Hide loading spinner
+                document.getElementById('npc-loading').classList.remove('visible');
+                
                 if (data.success) {
                     // Save state before reloading
                     if (data.gameState) {
@@ -629,6 +652,8 @@
                 document.getElementById('npc-description').value = '';
             })
             .catch(error => {
+                // Hide loading spinner on error
+                document.getElementById('npc-loading').classList.remove('visible');
                 console.error('Error:', error);
                 alert('Error creating NPC');
             });
