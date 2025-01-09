@@ -1,12 +1,12 @@
 npc:
-  name: "Choice example"
-  emoji: "🤸‍♀️"
+  name: "choice example"
+  emoji: "🤹‍♂️"
   position: [2, 5]
   personality: "A character with a multiple choice question"
 sequence:
   - type: talk
     text: "Welcome to Marco's Trading Post! I specialize in magical items."
-  - type: Choice
+  - type: choice
     text: "Want to trade?"
     choices:
       - choice_text: "Yes"

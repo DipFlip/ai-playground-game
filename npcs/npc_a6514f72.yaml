@@ -31,7 +31,7 @@ sequence:
   text: Would you like to hear another joke, or perhaps try your luck with another
     riddle?
   user_input: choice
-- type: Choice
+- type: choice
   text: Make your choice, dear traveler!
   choices:
   - choice_text: Tell me a joke, Pipsqueak!

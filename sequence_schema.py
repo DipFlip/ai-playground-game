@@ -17,8 +17,8 @@ SEQUENCE_FUNCTIONS = [
                         "properties": {
                             "type": {
                                 "type": "string",
-                                "enum": ["talk", "ask", "give", "trade", "Choice", "generate"],
-                                "description": "The type of action: talk (just dialogue), ask (requests input), give (gives item), trade (exchanges items), Choice (presents multiple options), generate (dynamically generates a new sequence)"
+                                "enum": ["talk", "ask", "give", "trade", "choice", "generate"],
+                                "description": "The type of action: talk (just dialogue), ask (requests input), give (gives item), trade (exchanges items), choice (presents multiple options), generate (dynamically generates a new sequence)"
                             },
                             "text": {
                                 "type": "string",
@@ -93,7 +93,7 @@ SEQUENCE_FUNCTIONS = [
                             },
                             "choices": {
                                 "type": "array",
-                                "description": "Required for 'Choice' type only. List of choices the player can select from",
+                                "description": "Required for 'choice' type only. List of choices the player can select from",
                                 "items": {
                                     "type": "object",
                                     "properties": {

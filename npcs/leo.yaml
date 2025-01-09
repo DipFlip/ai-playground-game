@@ -14,7 +14,7 @@ sequence:
     user_input: name
   - type: talk
     text: "Nice to meet you, {name}! You look hungry."
-  - type: Choice
+  - type: choice
     text: "Would you like some meat, {name}?"
     choices:
       - choice_text: "Yes, please!"

@@ -75,69 +75,12 @@ class NPC(Character):
         self.sequence.provide_response(response)
 
     def interact(self, character: Character) -> None:
+        """Handle interaction with a character"""
         if not self.is_talking:
             self.is_talking = True
             self.sequence.reset()  # Reset sequence to initial state
         
-        current_state = self.sequence.get_current_state()
-        if not current_state:
-            self.is_talking = False
-            return
-
-        if current_state.type == "talk":
-            formatted_text = self.sequence.format_text(current_state.text)
-            self.talk(f"{self.name}: {formatted_text}")
-            # Auto-transition to next state
-            self.sequence.current_state_id = current_state.next_state
-        
-        elif current_state.type == "give":
-            if current_state.item:
-                quantity = current_state.item.get('quantity', 1)
-                for _ in range(quantity):
-                    character.add_item(current_state.item['name'])
-                if current_state.text:
-                    formatted_text = self.sequence.format_text(current_state.text)
-                    self.talk(f"{self.name}: {formatted_text}")
-            # Auto-transition to next state
-            self.sequence.current_state_id = current_state.next_state
-        
-        elif current_state.type == "ask":
-            formatted_text = self.sequence.format_text(current_state.text)
-            self.talk(f"{self.name}: {formatted_text}")
-            self.sequence.waiting_for_response = True
-        
-        elif current_state.type == "Choice":
-            formatted_text = self.sequence.format_text(current_state.text)
-            self.talk(f"{self.name}: {formatted_text}")
-            self.sequence.waiting_for_response = True
-        
-        elif current_state.type == "trade":
-            if current_state.trade:
-                want = current_state.trade['want']
-                offer = current_state.trade['offer']
-                want_quantity = want.get('quantity', 1)
-                
-                has_items = character.has_item(want['name'], want_quantity)
-                
-                if has_items:
-                    for _ in range(want_quantity):
-                        character.remove_item(want['name'])
-                    
-                    offer_quantity = offer.get('quantity', 1)
-                    for _ in range(offer_quantity):
-                        character.add_item(offer['name'])
-                    
-                    formatted_text = self.sequence.format_text(current_state.trade['success_text'])
-                    self.talk(f"{self.name}: {formatted_text}")
-                else:
-                    formatted_text = self.sequence.format_text(current_state.trade['failure_text'])
-                    self.talk(f"{self.name}: {formatted_text}")
-                
-                if current_state.text:
-                    formatted_text = self.sequence.format_text(current_state.text)
-                    self.talk(f"{self.name}: {formatted_text}")
-            # Auto-transition to next state
-            self.sequence.current_state_id = current_state.next_state
+        self.sequence.interact(self, character)
 
     def try_wander(self, world, current_time: float) -> bool:
         """Attempt to make the NPC wander if enough time has passed."""

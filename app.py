@@ -229,7 +229,7 @@ def interact():
     if current_npc and current_npc.waiting_for_response:
         waiting_for_input = True
         current_state = current_npc.get_current_state()
-        if current_state and current_state.type == "Choice" and current_state.choices:
+        if current_state and current_state.type == "choice" and current_state.choices:
             choices = [choice['choice_text'] for choice in current_state.choices]
     
     return create_state_response({

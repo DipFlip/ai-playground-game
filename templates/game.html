@@ -31,7 +31,7 @@
 
                     <div id="input-container">
                         <div id="choices-container" style="display: none;">
-                            <!-- Choices will be dynamically added here -->
+                            <!-- choices will be dynamically added here -->
                         </div>
                         <div class="input-row">
                             <input type="text" id="player-input" placeholder="Type your answer here...">
@@ -428,9 +428,9 @@
                 });
 
                 // Select the first choice by default
-                const firstChoice = document.querySelector('.choice-button');
-                if (firstChoice) {
-                    firstChoice.classList.add('selected');
+                const firstchoice = document.querySelector('.choice-button');
+                if (firstchoice) {
+                    firstchoice.classList.add('selected');
                 }
             } else {
                 choicesContainer.style.display = 'none';

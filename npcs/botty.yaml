@@ -13,4 +13,4 @@ sequence:
     text: "What do you want to talk about?"
     user_input: topic
   - type: generate
-    context: "A sequence with a multiple choice question and a give item about: {topic}"
+    context: "Botty asked what the user wants to talk about. Return the sequence with a multiple choice question and a give item about: {topic}"

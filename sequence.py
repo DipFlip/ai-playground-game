@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Union, Optional
 from character_generator import create_sequence
 import yaml
+from character import Character
 
 @dataclass
 class State:
@@ -28,6 +29,68 @@ class Sequence:
         self.responses = {}  # Store player responses
         self.waiting_for_response = False
         self._build_state_machine(sequence_data)
+        
+    def interact(self, npc: 'Character', character: Character) -> None:
+        """Handle interaction between an NPC and a character"""
+        current_state = self.get_current_state()
+        if not current_state:
+            npc.is_talking = False
+            return
+
+        if current_state.type == "talk":
+            formatted_text = self.format_text(current_state.text)
+            npc.talk(f"{npc.name}: {formatted_text}")
+            # Auto-transition to next state
+            self.current_state_id = current_state.next_state
+        
+        elif current_state.type == "give":
+            if current_state.item:
+                quantity = current_state.item.get('quantity', 1)
+                for _ in range(quantity):
+                    character.add_item(current_state.item['name'])
+                if current_state.text:
+                    formatted_text = self.format_text(current_state.text)
+                    npc.talk(f"{npc.name}: {formatted_text}")
+            # Auto-transition to next state
+            self.current_state_id = current_state.next_state
+        
+        elif current_state.type == "ask":
+            formatted_text = self.format_text(current_state.text)
+            npc.talk(f"{npc.name}: {formatted_text}")
+            self.waiting_for_response = True
+        
+        elif current_state.type == "choice":
+            formatted_text = self.format_text(current_state.text)
+            npc.talk(f"{npc.name}: {formatted_text}")
+            self.waiting_for_response = True
+        
+        elif current_state.type == "trade":
+            if current_state.trade:
+                want = current_state.trade['want']
+                offer = current_state.trade['offer']
+                want_quantity = want.get('quantity', 1)
+                
+                has_items = character.has_item(want['name'], want_quantity)
+                
+                if has_items:
+                    for _ in range(want_quantity):
+                        character.remove_item(want['name'])
+                    
+                    offer_quantity = offer.get('quantity', 1)
+                    for _ in range(offer_quantity):
+                        character.add_item(offer['name'])
+                    
+                    formatted_text = self.format_text(current_state.trade['success_text'])
+                    npc.talk(f"{npc.name}: {formatted_text}")
+                else:
+                    formatted_text = self.format_text(current_state.trade['failure_text'])
+                    npc.talk(f"{npc.name}: {formatted_text}")
+                
+                if current_state.text:
+                    formatted_text = self.format_text(current_state.text)
+                    npc.talk(f"{npc.name}: {formatted_text}")
+            # Auto-transition to next state
+            self.current_state_id = current_state.next_state
 
     def _build_state_machine(self, sequence: List[dict]) -> None:
         """Convert sequence data into a state machine"""
@@ -49,7 +112,7 @@ class Sequence:
                 transitions = {}
                 next_state = None
 
-                if action['type'] == "Choice":
+                if action['type'] == "choice":
                     # For each choice, process its sequence and link to it
                     choice_transitions = {}
                     for choice in action['choices']:
@@ -104,7 +167,7 @@ class Sequence:
         state = self.states.get(self.current_state_id)
         if state:
             # Set waiting_for_response based on state type - only for states that need input
-            self.waiting_for_response = state.type in ["ask", "Choice"]
+            self.waiting_for_response = state.type in ["ask", "choice"]
         return state
 
     def format_text(self, text: str) -> str:
@@ -162,7 +225,7 @@ class Sequence:
                             transitions = {}
                             next_state = None
 
-                            if action['type'] == "Choice":
+                            if action['type'] == "choice":
                                 # For each choice, process its sequence and link to it
                                 choice_transitions = {}
                                 for choice in action['choices']:
@@ -203,7 +266,7 @@ class Sequence:
             else:
                 # Normal transition for non-generate states
                 self.current_state_id = next_state
-        elif current_state.type == "Choice":
+        elif current_state.type == "choice":
             # Check if response matches any of the choices
             if current_state.transitions and response in current_state.transitions:
                 # Transition to next state based on choice
