@@ -268,5 +268,30 @@ def create_npc():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/reset_game', methods=['POST'])
+def reset_game():
+    """Reset all game state to initial values."""
+    try:
+        # Clear player state
+        PLAYER_STATE.update({
+            'x': 0,
+            'y': 0,
+            'inventory': {}
+        })
+        
+        # Clear NPC positions
+        NPC_POSITIONS.clear()
+        
+        # Clear dynamic NPCs
+        DYNAMIC_NPCS.clear()
+        
+        # Reinitialize the game world
+        global game_world
+        game_world = World()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 if __name__ == '__main__':
     app.run(debug=True) 

@@ -88,6 +88,12 @@
                     </button>
                 </div>
 
+                <div class="reset-control">
+                    <button id="reset-game" class="control-button">
+                        🔄 Reset Game
+                    </button>
+                </div>
+
                 <div class="position-display">
                     <h3>Position:</h3>
                     <div id="position">
@@ -713,6 +719,31 @@
                 }
             });
         }
+
+        // Add reset functionality
+        document.getElementById('reset-game').addEventListener('click', function() {
+            if (confirm('Are you sure you want to reset the game? This will clear your inventory and reset all NPCs.')) {
+                // Clear local storage
+                localStorage.removeItem('gameState');
+                
+                // Reset server state
+                fetch('/reset_game', {
+                    method: 'POST',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload(); // Reload the page to reset the game state
+                    } else {
+                        alert('Failed to reset game: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error resetting game');
+                });
+            }
+        });
     </script>
 </body>
 </html> 
