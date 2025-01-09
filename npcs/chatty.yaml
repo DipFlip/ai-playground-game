@@ -1,0 +1,18 @@
+npc:
+  name: "Chatty"
+  emoji: "🎃"
+  position: [6, 3]
+  wander:
+    enabled: true
+    interval: 4  # Wander every 4 seconds
+  personality: "A chatty bot that asks questions and talks with you"
+sequence:
+  - type: talk
+    text: "I'm Chatty, your friendly neighborhood chatbot!"
+  - type: choice
+    text: "What do you want to talk about?"
+    choices:
+    - choice_text: "Weather"
+    - choice_text: "Planets"
+  - type: generate
+    context: "Return a sequence that can contain a multiple choice question or another generate type that continues the conversation."

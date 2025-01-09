@@ -5,8 +5,11 @@ import os
 import dotenv
 from npc_schema import NPC_FUNCTIONS
 from sequence_schema import SEQUENCE_FUNCTIONS
+import logging
 
 dotenv.load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 # Initialize OpenAI client with explicit API key from environment
 client = OpenAI(
@@ -18,6 +21,7 @@ def create_sequence(prompt):
     Creates just a sequence based on the given prompt using OpenAI's API.
     Returns the sequence directly without NPC wrapper.
     """
+    logger.info(f"Creating sequence with prompt:\n {prompt}")
     try:
         sequence_response = client.chat.completions.create(
             model="gpt-4o",
@@ -30,6 +34,7 @@ def create_sequence(prompt):
 
         # Extract the sequence data
         sequence_data = json.loads(sequence_response.choices[0].message.function_call.arguments)
+        logger.info(f"Sequence data:\n {sequence_data}")
         return sequence_data["sequence"]
 
     except Exception as e:
