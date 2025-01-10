@@ -54,3 +54,37 @@ def test_move_endpoint(client):
         # If movement was not allowed, position should not have changed
         assert data['gameState']['player']['x'] == initial_x
         assert data['gameState']['player']['y'] == initial_y 
+
+def test_interact_with_leo(client):
+    """Test interaction with Leo NPC"""
+    # Position player at Leo's location (2,1)
+    test_data = {
+        'savedState': {
+            'player': {'x': 2, 'y': 1},
+            'npcPositions': {},
+            'dynamicNpcs': []
+        }
+    }
+    
+    # First interaction - Leo introduces himself
+    response = client.post('/interact',
+                          data=json.dumps(test_data),
+                          content_type='application/json')
+    
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert 'messages' in data
+    assert any("I'm Leo" in msg for msg in data['messages'])
+    assert data['waitingForInput'] == False  # Not waiting for input yet
+    assert data['is_talking'] == True
+    
+    # Second interaction - Leo asks for name
+    response = client.post('/interact',
+                          data=json.dumps(test_data),
+                          content_type='application/json')
+    
+    data = json.loads(response.data)
+    assert 'messages' in data
+    assert any("What's your name" in msg for msg in data['messages'])
+    assert data['waitingForInput'] == True  # Now waiting for name input
+    assert data['is_talking'] == True 
