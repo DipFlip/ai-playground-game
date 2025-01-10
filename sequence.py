@@ -110,103 +110,112 @@ class Sequence:
             # Auto-transition to next state
             self.current_state_id = current_state.next_state
 
+    def _process_sequence(self, sequence_data: List[dict], state_counter: int = 0) -> tuple[str, int]:
+        """Process a sequence and return the start state ID and the next state counter"""
+        sequence_start = None
+        last_state = None
+        states_to_process = []
+
+        # First pass: create all states
+        for action in sequence_data:
+            state_id = f"state_{state_counter}"
+            state_counter += 1
+
+            if sequence_start is None:
+                sequence_start = state_id
+            
+            # Create state transitions based on action type
+            transitions = {}
+            next_state = None
+
+            if action['type'] == "choice":
+                # For each choice, process its sequence and link to it
+                choice_transitions = {}
+                for choice in action['choices']:
+                    if 'sequence' in choice:
+                        # Process the choice's sequence and get its start state
+                        choice_start, state_counter = self._process_sequence(choice['sequence'], state_counter)
+                        choice_transitions[choice['choice_text']] = choice_start
+                    elif len(choice) == 1 and 'choice_text' in choice:
+                        # If choice only has choice_text, mark it for later linking
+                        choice_transitions[choice['choice_text']] = "NEXT_STATE"
+                    else:
+                        # Create a single state for this choice's action
+                        choice_state = f"state_{state_counter}"
+                        state_counter += 1
+                        # Remove choice-specific keys and keep action data
+                        action_data = {k: v for k, v in choice.items() if k not in ['choice_text', 'sequence']}
+                        self.states[choice_state] = State(**action_data, next_state="NEXT_STATE")
+                        choice_transitions[choice['choice_text']] = choice_state
+                transitions = choice_transitions
+            elif action['type'] == "ask":
+                next_state = f"state_{state_counter}"  # Next state will be the next one we create
+                transitions["*"] = next_state
+            
+            # Create the state with all fields from the action
+            state_data = {
+                'type': action['type'],
+                'text': action.get('text'),
+                'user_input': action.get('user_input'),
+                'item': action.get('item'),
+                'trade': action.get('trade'),
+                'choices': action.get('choices'),
+                'context': action.get('context'),
+                'next_state': next_state,
+                'transitions': transitions
+            }
+            self.states[state_id] = State(**state_data)
+            states_to_process.append((state_id, action))
+
+            if last_state and self.states[last_state].next_state is None:
+                self.states[last_state].next_state = state_id
+
+            last_state = state_id
+
+        # Second pass: link states to their next states
+        for i, (state_id, action) in enumerate(states_to_process):
+            next_state_id = states_to_process[i + 1][0] if i + 1 < len(states_to_process) else None
+            state = self.states[state_id]
+
+            # Link simple choices to next state
+            if action['type'] == "choice" and state.transitions:
+                for choice_text, transition in state.transitions.items():
+                    if transition == "NEXT_STATE":
+                        state.transitions[choice_text] = next_state_id
+            
+            # Link choice action states to next state
+            for choice_state_id in state.transitions.values():
+                if choice_state_id != "NEXT_STATE":
+                    choice_state = self.states.get(choice_state_id)
+                    if choice_state and choice_state.next_state == "NEXT_STATE":
+                        choice_state.next_state = next_state_id
+
+        return sequence_start, state_counter
+
     def _build_state_machine(self, sequence: List[dict]) -> None:
         """Convert sequence data into a state machine"""
-        state_counter = 0
-
-        def process_sequence(sequence_data, parent_state=None):
-            nonlocal state_counter
-            sequence_start = None
-            last_state = None
-
-            # First pass: create all states
-            states_to_process = []
-            for action in sequence_data:
-                state_id = f"state_{state_counter}"
-                state_counter += 1
-
-                if sequence_start is None:
-                    sequence_start = state_id
-                
-                # Create state transitions based on action type
-                transitions = {}
-                next_state = None
-
-                if action['type'] == "choice":
-                    # For each choice, process its sequence and link to it
-                    choice_transitions = {}
-                    for choice in action['choices']:
-                        if 'sequence' in choice:
-                            # Process the choice's sequence and get its start state
-                            choice_start = process_sequence(choice['sequence'], state_id)
-                            choice_transitions[choice['choice_text']] = choice_start
-                        elif len(choice) == 1 and 'choice_text' in choice:
-                            # If choice only has choice_text, mark it for later linking
-                            choice_transitions[choice['choice_text']] = "NEXT_STATE"
-                        else:
-                            # Create a single state for this choice's action
-                            choice_state = f"state_{state_counter}"
-                            state_counter += 1
-                            # Remove choice-specific keys and keep action data
-                            action_data = {k: v for k, v in choice.items() if k not in ['choice_text', 'sequence']}
-                            self.states[choice_state] = State(**action_data, next_state=None)
-                            choice_transitions[choice['choice_text']] = choice_state
-                    transitions = choice_transitions
-                elif action['type'] == "ask":
-                    next_state = f"state_{state_counter}"  # Next state will be the next one we create
-                    transitions["*"] = next_state
-                
-                # Create the state with all fields from the action
-                state_data = {
-                    'type': action['type'],
-                    'text': action.get('text'),
-                    'user_input': action.get('user_input'),
-                    'item': action.get('item'),
-                    'trade': action.get('trade'),
-                    'choices': action.get('choices'),
-                    'context': action.get('context'),
-                    'next_state': next_state,
-                    'transitions': transitions
-                }
-                self.states[state_id] = State(**state_data)
-                states_to_process.append((state_id, action))
-
-                if last_state and self.states[last_state].next_state is None:
-                    self.states[last_state].next_state = state_id
-
-                if self.initial_state is None:
-                    self.initial_state = state_id
-
-                last_state = state_id
-
-            # Second pass: link simple choices to their next states
-            for i, (state_id, action) in enumerate(states_to_process):
-                if action['type'] == "choice":
-                    state = self.states[state_id]
-                    if state.transitions:
-                        next_state_id = states_to_process[i + 1][0] if i + 1 < len(states_to_process) else None
-                        if next_state_id:
-                            for choice_text, transition in state.transitions.items():
-                                if transition == "NEXT_STATE":
-                                    state.transitions[choice_text] = next_state_id
-
-            return sequence_start
-
-        process_sequence(sequence)
+        sequence_start, _ = self._process_sequence(sequence)
+        self.initial_state = sequence_start
         self.current_state_id = self.initial_state
+
+    def _process_generate_state(self, state: State) -> None:
+        """Process a generate state and create a new sequence"""
+        context = self.format_text(state.context) if state.context else "Continue the conversation naturally based on the history"
+        history_text = "\n".join([f"{'NPC' if h['role'] == 'npc' else 'Player'}: {h['text']}" for h in self.history])
+        context_with_history = f"{context}\nConversation history:\n{history_text}"
+        new_sequence = create_sequence(context_with_history)
+        if new_sequence:
+            sequence_start, _ = self._process_sequence(new_sequence, len(self.states))
+            self.current_state_id = sequence_start
 
     def get_current_state(self) -> Optional[State]:
         """Get the current state or None if ended"""
         if self.current_state_id == "end":
-            logger.debug("Current state is 'end'")
             return None
         state = self.states.get(self.current_state_id)
         if state:
             # Set waiting_for_response based on state type - only for states that need input
             self.waiting_for_response = state.type in ["ask", "choice"]
-            logger.debug(f"Current state: {self.current_state_id}, type: {state.type}, waiting: {self.waiting_for_response}")
-        else:
-            logger.warning(f"No state found for ID: {self.current_state_id}")
         return state
 
     def format_text(self, text: str) -> str:
@@ -218,102 +227,15 @@ class Sequence:
         except KeyError:
             return text
 
-    def _process_generate_state(self, state: State) -> None:
-        """Process a generate state and create a new sequence"""
-        logger.debug(f"Processing generate state with context: {state.context}")
-        # Process generate without waiting for input
-        context = self.format_text(state.context) if state.context else "Continue the conversation naturally based on the history"
-        # Include conversation history in the context
-        history_text = "\n".join([f"{'NPC' if h['role'] == 'npc' else 'Player'}: {h['text']}" for h in self.history])
-        context_with_history = f"{context}\nConversation history:\n{history_text}"
-        new_sequence = create_sequence(context_with_history)
-        logger.debug(f"Generated new sequence: {new_sequence}")
-        if new_sequence:
-            # First pass: create all states
-            states_to_process = []
-            state_counter = len(self.states)
-            
-            for action in new_sequence:
-                state_id = f"state_{state_counter}"
-                state_counter += 1
-                logger.debug(f"Creating state {state_id} for action: {action}")
-                
-                # Create state transitions based on action type
-                transitions = {}
-                next_state = None
-
-                if action['type'] == "choice":
-                    # For each choice, process its sequence and link to it
-                    choice_transitions = {}
-                    for choice in action['choices']:
-                        if 'sequence' in choice:
-                            # Process the choice's sequence and get its start state
-                            choice_start = self._build_state_machine(choice['sequence'], state_counter)
-                            choice_transitions[choice['choice_text']] = choice_start
-                            state_counter = len(self.states)  # Update counter after processing sequence
-                        elif len(choice) == 1 and 'choice_text' in choice:
-                            # If choice only has choice_text, mark it for later linking
-                            choice_transitions[choice['choice_text']] = "NEXT_STATE"
-                        else:
-                            # Create a single state for this choice's action
-                            choice_state = f"state_{state_counter}"
-                            state_counter += 1
-                            # Remove choice-specific keys and keep action data
-                            action_data = {k: v for k, v in choice.items() if k not in ['choice_text', 'sequence']}
-                            self.states[choice_state] = State(**action_data, next_state=None)
-                            choice_transitions[choice['choice_text']] = choice_state
-                    transitions = choice_transitions
-                    logger.debug(f"Created choice transitions: {transitions}")
-                elif action['type'] == "ask":
-                    next_state = f"state_{state_counter}"  # Next state will be the next one we create
-                    transitions["*"] = next_state
-                
-                # Create the state with all fields from the action
-                state_data = {
-                    'type': action['type'],
-                    'text': action.get('text'),
-                    'user_input': action.get('user_input'),
-                    'item': action.get('item'),
-                    'trade': action.get('trade'),
-                    'choices': action.get('choices'),
-                    'context': action.get('context'),
-                    'next_state': next_state,
-                    'transitions': transitions
-                }
-                self.states[state_id] = State(**state_data)
-                states_to_process.append((state_id, action))
-
-            # Second pass: link simple choices to their next states
-            for i, (state_id, action) in enumerate(states_to_process):
-                if action['type'] == "choice":
-                    state = self.states[state_id]
-                    if state.transitions:
-                        next_state_id = states_to_process[i + 1][0] if i + 1 < len(states_to_process) else None
-                        if next_state_id:
-                            for choice_text, transition in state.transitions.items():
-                                if transition == "NEXT_STATE":
-                                    state.transitions[choice_text] = next_state_id
-                            logger.debug(f"Updated choice transitions for state {state_id}: {state.transitions}")
-
-            # Move to the first state of the new sequence
-            if states_to_process:
-                self.current_state_id = states_to_process[0][0]
-                logger.debug(f"Moving to first state of new sequence: {self.current_state_id}")
-            else:
-                logger.warning("No states were processed in the new sequence")
-
     def provide_response(self, response: str) -> None:
         """Handle a response from the player"""
         if not self.waiting_for_response:
-            logger.debug("Not waiting for response")
             return
 
         current_state = self.get_current_state()
         if not current_state:
-            logger.debug("No current state")
             return
 
-        logger.debug(f"Processing response '{response}' for state type {current_state.type}")
         # Add player's response to history
         self.history.append({"role": "player", "text": response})
 
@@ -328,7 +250,6 @@ class Sequence:
             else:
                 next_state = current_state.next_state
             
-            logger.debug(f"Ask next state: {next_state}")
             # If next state is generate, process it
             next_state_obj = self.states.get(next_state)
             if next_state_obj and next_state_obj.type == "generate":
@@ -342,7 +263,6 @@ class Sequence:
             # Check if response matches any of the choices
             if current_state.transitions and response in current_state.transitions:
                 next_state = current_state.transitions[response]
-                logger.debug(f"Choice next state: {next_state}")
                 # Check if next state is generate
                 next_state_obj = self.states.get(next_state)
                 if next_state_obj and next_state_obj.type == "generate":
@@ -352,13 +272,11 @@ class Sequence:
                     # Normal transition for non-generate states
                     self.current_state_id = next_state
             else:
-                logger.debug(f"Invalid choice. Available transitions: {current_state.transitions}")
                 # If invalid choice, stay in current state
                 return
 
         # Update waiting_for_response based on new state
-        new_state = self.get_current_state()
-        logger.debug(f"New state after response: {self.current_state_id}, type: {new_state.type if new_state else None}")
+        self.get_current_state()
 
     def reset(self) -> None:
         """Reset sequence to initial state"""
