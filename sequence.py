@@ -78,14 +78,14 @@ class Sequence:
                 self.responses[self.current_node.user_input] = response
             self.current_node = self.current_node.next
         elif isinstance(self.current_node, ChoiceNode):
-            next_node = self.current_node.choice_nodes.get(response)
-            if next_node:
-                # Follow the choice node's chain until the end
-                while next_node.next:
-                    next_node = next_node.next
-                # Link back to the main sequence
-                next_node.next = self.current_node.next
-                self.current_node = next_node
+            chosen_node = self.current_node.choices.get(response)
+            if chosen_node:
+                # Set the chosen node's sequence to continue to the next node in the main sequence
+                current = chosen_node
+                while current.next:
+                    current = current.next
+                current.next = self.current_node.next
+                self.current_node = chosen_node
             else:
                 # If choice not found, continue with next node
                 self.current_node = self.current_node.next

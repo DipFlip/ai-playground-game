@@ -94,10 +94,13 @@ class AskNode(Node):
         return cls(action['text'], action.get('user_input'))
 
 class ChoiceNode(Node):
-    def __init__(self, text: str, choices: List[Dict[str, Union[str, Dict[str, Union[str, int]]]]], choice_nodes: Dict[str, Node] = None):
+    def __init__(self, text: str):
         super().__init__(text)
-        self.choices = choices
-        self.choice_nodes = choice_nodes or {}
+        self.choices: Dict[str, Node] = {}  # Maps choice text to its node sequence
+
+    def add_choice(self, choice_text: str, node: Node) -> None:
+        """Add a choice and its corresponding node sequence"""
+        self.choices[choice_text] = node
 
     def handle(self, npc: Character, character: Character, sequence: 'Sequence') -> Optional[Node]:
         formatted_text = sequence.format_text(self.text)
@@ -106,22 +109,18 @@ class ChoiceNode(Node):
         sequence.history.append({"role": "npc", "text": formatted_text})
         npc.is_talking = True
         sequence.waiting_for_response = True
-        sequence.current_node = self  # Store current node while waiting for choice
+        sequence.current_node = self
         return None
 
     @classmethod
     def from_action(cls, action: dict) -> 'Node':
-        node = cls(action['text'], action['choices'])
+        node = cls(action['text'])
         # Create nodes for each choice
         for choice in action['choices']:
             if 'type' in choice:
-                choice_action = {
-                    'type': choice['type'],
-                    'text': choice.get('text'),
-                    'item': choice.get('item')
-                }
-                choice_node = NodeFactory.create_node(choice_action)
-                node.choice_nodes[choice['choice_text']] = choice_node
+                # Create the node sequence for this choice
+                choice_node = NodeFactory.create_node(choice)
+                node.add_choice(choice['choice_text'], choice_node)
         return node
 
 class GenerateNode(Node):

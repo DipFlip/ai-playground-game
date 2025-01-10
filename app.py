@@ -270,8 +270,8 @@ class InteractionHandler:
         if current_npc and current_npc.waiting_for_response:
             waiting_for_input = True
             current_node = current_npc.get_current_node()
-            if current_node and isinstance(current_node, ChoiceNode) and current_node.choices:
-                choices = [choice['choice_text'] for choice in current_node.choices]
+            if current_node and isinstance(current_node, ChoiceNode):
+                choices = list(current_node.choices.keys())  # Get the choice texts from the dictionary keys
         
         return {
             'success': result,
