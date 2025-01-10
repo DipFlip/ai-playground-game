@@ -12,6 +12,8 @@ from typing import Dict, List, Optional, Any, Union
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)  # Get logger for this module
+
 # Reduce Werkzeug logger verbosity
 logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
@@ -295,27 +297,54 @@ def interact():
 def create_npc():
     try:
         description = request.json['description']
+        # Create the NPC data
         npc_data = create_character(description)
         
+        # If npc_data is a string (YAML), parse it
+        if isinstance(npc_data, str):
+            npc_data = yaml.safe_load(npc_data)
+            
+        if not npc_data or 'npc' not in npc_data:
+            raise ValueError("Failed to generate valid NPC data")
+
         # Generate unique ID for the NPC
         npc_id = str(uuid.uuid4())
-        npc_filename = f'dynamic_{npc_id}.yaml'
+        npc_filename = f'dynamic_{npc_id}'  # Remove .yaml extension from the ID
         
-        # Save NPC data
-        npc_path = os.path.join('npcs', npc_filename)
-        with open(npc_path, 'w') as f:
-            yaml.dump(npc_data, f)
-        
-        # Add to dynamic NPCs list
-        DYNAMIC_NPCS.append({
+        # Add to dynamic NPCs list with position
+        dynamic_npc = {
             'id': npc_id,
             'x': request.json.get('x', 0),
-            'y': request.json.get('y', 0)
-        })
+            'y': request.json.get('y', 0),
+            'data': npc_data  # Store the actual NPC data
+        }
+        DYNAMIC_NPCS.append(dynamic_npc)
         
-        return jsonify({'success': True, 'message': 'NPC created successfully'})
+        # Add initial position to NPC_POSITIONS
+        NPC_POSITIONS[npc_filename] = {
+            'x': request.json.get('x', 0),
+            'y': request.json.get('y', 0)
+        }
+        
+        # Log the data for debugging
+        logger.debug(f"Created NPC with data: {dynamic_npc}")
+        
+        # Reload the world to include the new NPC
+        game_world.reload_npcs()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'NPC created successfully',
+            'npc': {
+                'id': npc_id,
+                'x': dynamic_npc['x'],
+                'y': dynamic_npc['y'],
+                'name': npc_data['npc'].get('name', 'Unknown'),
+                'emoji': npc_data['npc'].get('emoji', '👤')
+            }
+        })
     except Exception as e:
-        logging.error(f"Error creating NPC: {str(e)}")
+        logger.error(f"Error creating NPC: {str(e)}", exc_info=True)  # Add full traceback
         return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/reset_game', methods=['POST'])

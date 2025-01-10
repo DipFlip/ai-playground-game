@@ -40,47 +40,80 @@ class World:
         self.center_x = int(self.map_width // 2)
         self.center_y = int(self.map_height // 2)
         
-        # Load NPCs from files and memory
+        # Initialize locations list
         self.locations = []
         
-        # Load static NPCs from files
-        npc_path = os.path.join(base_path, 'npcs', '*.yaml')
-        for npc_file in glob.glob(npc_path):
-            npc = NPC.from_yaml(npc_file)
-            npc_id = os.path.basename(npc_file)
-            
-            # Use stored position if available
-            if npc_id in NPC_POSITIONS:
-                npc.x, npc.y = NPC_POSITIONS[npc_id]['x'], NPC_POSITIONS[npc_id]['y']
-            elif npc.needs_position:
-                # Find a suitable position for the NPC
-                x, y = self.find_random_position()
-                npc.x, npc.y = x, y
-                NPC_POSITIONS[npc_id] = {'x': x, 'y': y}
-            else:
-                NPC_POSITIONS[npc_id] = {'x': npc.x, 'y': npc.y}
-                
-            self.locations.append(npc)
-        
-        # Load dynamic NPCs from memory
-        for i, npc_data in enumerate(DYNAMIC_NPCS):
-            npc = NPC.from_yaml_data(npc_data)
-            npc_id = f"dynamic_{i}"
-            
-            # Use stored position if available
-            if npc_id in NPC_POSITIONS:
-                npc.x, npc.y = NPC_POSITIONS[npc_id]['x'], NPC_POSITIONS[npc_id]['y']
-            elif npc.needs_position:
-                x, y = self.find_random_position()
-                npc.x, npc.y = x, y
-                NPC_POSITIONS[npc_id] = {'x': x, 'y': y}
-            else:
-                NPC_POSITIONS[npc_id] = {'x': npc.x, 'y': npc.y}
-                
-            self.locations.append(npc)
+        # Load all NPCs
+        self.reload_npcs()
         
         # Initialize last update time
         self.last_update_time = time.time()
+
+    def reload_npcs(self):
+        """Reload all NPCs, particularly after adding a new dynamic NPC"""
+        # Keep track of non-NPC locations
+        non_npc_locations = [loc for loc in self.locations if not isinstance(loc, NPC)]
+        
+        # Clear current NPCs
+        self.locations = non_npc_locations
+        
+        # Load static NPCs from files
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        npc_path = os.path.join(base_path, 'npcs', '*.yaml')
+        for npc_file in glob.glob(npc_path):
+            try:
+                npc = NPC.from_yaml(npc_file)
+                npc_id = os.path.basename(npc_file)
+                
+                # Use stored position if available
+                if npc_id in NPC_POSITIONS:
+                    npc.x, npc.y = NPC_POSITIONS[npc_id]['x'], NPC_POSITIONS[npc_id]['y']
+                elif npc.needs_position:
+                    x, y = self.find_random_position()
+                    npc.x, npc.y = x, y
+                    NPC_POSITIONS[npc_id] = {'x': x, 'y': y}
+                else:
+                    NPC_POSITIONS[npc_id] = {'x': npc.x, 'y': npc.y}
+                    
+                self.locations.append(npc)
+            except Exception as e:
+                logger.error(f"Error loading static NPC from {npc_file}: {str(e)}")
+                continue
+        
+        # Load dynamic NPCs from memory
+        for dynamic_npc in DYNAMIC_NPCS:
+            try:
+                if not isinstance(dynamic_npc, dict):
+                    logger.error(f"Invalid dynamic NPC format: {dynamic_npc}")
+                    continue
+                    
+                npc_id = dynamic_npc.get('id')
+                if not npc_id:
+                    logger.error(f"Dynamic NPC missing ID: {dynamic_npc}")
+                    continue
+                
+                npc_id = f"dynamic_{npc_id}"
+                
+                # Validate NPC data
+                if not dynamic_npc.get('data') or not isinstance(dynamic_npc['data'], dict):
+                    logger.error(f"Invalid NPC data format: {dynamic_npc}")
+                    continue
+                
+                # Create NPC from stored data
+                npc = NPC.from_yaml_data(dynamic_npc['data'])
+                
+                # Set position from stored data
+                npc.x = dynamic_npc.get('x', 0)
+                npc.y = dynamic_npc.get('y', 0)
+                
+                # Update NPC_POSITIONS
+                NPC_POSITIONS[npc_id] = {'x': npc.x, 'y': npc.y}
+                
+                self.locations.append(npc)
+                logger.debug(f"Successfully loaded dynamic NPC: {npc_id}")
+            except Exception as e:
+                logger.error(f"Error loading dynamic NPC: {str(e)}", exc_info=True)
+                continue
 
     def update_npcs(self):
         """Update only NPC states and positions, leaving player state unchanged."""
