@@ -18,6 +18,12 @@ class Node(ABC):
         """Handle the node's action and return the next node"""
         pass
 
+    @classmethod
+    @abstractmethod
+    def from_action(cls, action: dict) -> 'Node':
+        """Create a node from action data"""
+        pass
+
 class EndNode(Node):
     """Special node that handles the end of a conversation"""
     def handle(self, npc: Character, character: Character, sequence: 'Sequence') -> Optional[Node]:
@@ -25,6 +31,10 @@ class EndNode(Node):
         npc.is_talking = False
         sequence.current_node = None
         return None
+
+    @classmethod
+    def from_action(cls, action: dict) -> 'Node':
+        return cls()
 
 class TalkNode(Node):
     def handle(self, npc: Character, character: Character, sequence: 'Sequence') -> Optional[Node]:
@@ -35,6 +45,10 @@ class TalkNode(Node):
         sequence.history.append({"role": "npc", "text": formatted_text})
         npc.is_talking = True
         return self.next
+
+    @classmethod
+    def from_action(cls, action: dict) -> 'Node':
+        return cls(action['text'])
 
 class GiveNode(Node):
     def __init__(self, text: str, item: Dict[str, Union[str, int]]):
@@ -57,6 +71,10 @@ class GiveNode(Node):
 
         return self.next
 
+    @classmethod
+    def from_action(cls, action: dict) -> 'Node':
+        return cls(action.get('text'), action.get('item'))
+
 class AskNode(Node):
     def __init__(self, text: str, user_input: str):
         super().__init__(text)
@@ -71,11 +89,15 @@ class AskNode(Node):
         sequence.current_node = self  # Store current node while waiting for response
         return None
 
+    @classmethod
+    def from_action(cls, action: dict) -> 'Node':
+        return cls(action['text'], action.get('user_input'))
+
 class ChoiceNode(Node):
-    def __init__(self, text: str, choices: List[Dict[str, Union[str, Dict[str, Union[str, int]]]]]):
+    def __init__(self, text: str, choices: List[Dict[str, Union[str, Dict[str, Union[str, int]]]]], choice_nodes: Dict[str, Node] = None):
         super().__init__(text)
         self.choices = choices
-        self.choice_nodes: Dict[str, Node] = {}
+        self.choice_nodes = choice_nodes or {}
 
     def handle(self, npc: Character, character: Character, sequence: 'Sequence') -> Optional[Node]:
         formatted_text = sequence.format_text(self.text)
@@ -86,6 +108,21 @@ class ChoiceNode(Node):
         sequence.waiting_for_response = True
         sequence.current_node = self  # Store current node while waiting for choice
         return None
+
+    @classmethod
+    def from_action(cls, action: dict) -> 'Node':
+        node = cls(action['text'], action['choices'])
+        # Create nodes for each choice
+        for choice in action['choices']:
+            if 'type' in choice:
+                choice_action = {
+                    'type': choice['type'],
+                    'text': choice.get('text'),
+                    'item': choice.get('item')
+                }
+                choice_node = NodeFactory.create_node(choice_action)
+                node.choice_nodes[choice['choice_text']] = choice_node
+        return node
 
 class GenerateNode(Node):
     def __init__(self, text: str = None, context: str = None):
@@ -120,6 +157,10 @@ class GenerateNode(Node):
             new_head = sequence._build_node_chain(new_sequence)
             return new_head
         return None
+
+    @classmethod
+    def from_action(cls, action: dict) -> 'Node':
+        return cls(action.get('text'), action.get('context'))
 
 class TradeNode(Node):
     def __init__(self, text: str, trade: Dict[str, Union[Dict[str, Union[str, int]], str]]):
@@ -163,4 +204,28 @@ class TradeNode(Node):
         
         offer_quantity = offer.get('quantity', 1)
         for _ in range(offer_quantity):
-            character.add_item(offer['name']) 
+            character.add_item(offer['name'])
+
+    @classmethod
+    def from_action(cls, action: dict) -> 'Node':
+        return cls(action.get('text'), action.get('trade'))
+
+class NodeFactory:
+    """Factory class for creating nodes from action data"""
+    _node_types = {
+        'talk': TalkNode,
+        'give': GiveNode,
+        'ask': AskNode,
+        'choice': ChoiceNode,
+        'trade': TradeNode,
+        'generate': GenerateNode,
+        'end': EndNode
+    }
+
+    @classmethod
+    def create_node(cls, action: dict) -> Node:
+        """Create a node from action data"""
+        node_type = action['type']
+        if node_type not in cls._node_types:
+            raise ValueError(f"Unknown node type: {node_type}")
+        return cls._node_types[node_type].from_action(action) 

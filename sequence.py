@@ -7,7 +7,7 @@ from character_generator import create_sequence
 import yaml
 from character import Character
 import logging
-from nodes import Node, EndNode, TalkNode, GiveNode, AskNode, ChoiceNode, GenerateNode, TradeNode
+from nodes import Node, EndNode, TalkNode, GiveNode, AskNode, ChoiceNode, GenerateNode, TradeNode, NodeFactory
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +34,12 @@ class Sequence:
             return None
 
         # Create the first node
-        head = self._create_node(sequence_data[0])
+        head = NodeFactory.create_node(sequence_data[0])
         current = head
 
         # Create and link the rest of the nodes
         for action in sequence_data[1:]:
-            next_node = self._create_node(action)
+            next_node = NodeFactory.create_node(action)
             current.next = next_node
             current = next_node
 
@@ -49,35 +49,6 @@ class Sequence:
         logger.debug("Added EndNode as the final node in sequence")
 
         return head
-
-    def _create_node(self, action: dict) -> Node:
-        """Create a node based on the action type"""
-        node_type = action['type']
-        if node_type == 'talk':
-            return TalkNode(action['text'])
-        elif node_type == 'give':
-            return GiveNode(action.get('text'), action.get('item'))
-        elif node_type == 'ask':
-            return AskNode(action['text'], action.get('user_input'))
-        elif node_type == 'choice':
-            node = ChoiceNode(action['text'], action['choices'])
-            # Create nodes for each choice
-            for choice in action['choices']:
-                if 'type' in choice:
-                    choice_action = {
-                        'type': choice['type'],
-                        'text': choice.get('text'),
-                        'item': choice.get('item')
-                    }
-                    choice_node = self._create_node(choice_action)
-                    node.choice_nodes[choice['choice_text']] = choice_node
-            return node
-        elif node_type == 'trade':
-            return TradeNode(action.get('text'), action.get('trade'))
-        elif node_type == 'generate':
-            return GenerateNode(action.get('text'), action.get('context'))
-        else:
-            raise ValueError(f"Unknown node type: {node_type}")
 
     def interact(self, npc: Character, character: Character) -> None:
         """Handle interaction between an NPC and a character"""
