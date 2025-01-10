@@ -197,3 +197,31 @@ class World:
         
         # If no position found, return a default position
         return [0, 0]
+
+    def reset(self):
+        """Reset the world state to initial values."""
+        # Reset player state
+        PLAYER_STATE.update({
+            'x': 0,
+            'y': 0,
+            'inventory': {}
+        })
+        
+        # Reset character
+        self.character.x = 0
+        self.character.y = 0
+        self.character.inventory = {}
+        
+        # Clear NPC positions
+        NPC_POSITIONS.clear()
+        
+        # Clear dynamic NPCs
+        DYNAMIC_NPCS.clear()
+        
+        # Clear current interaction
+        self.current_interaction = None
+        
+        # Reload NPCs to reset their positions
+        self.reload_npcs()
+        
+        logger.info("Game state reset successfully")
