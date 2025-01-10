@@ -9,6 +9,7 @@ import json
 import logging
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Any, Union
+from sequence import ChoiceNode
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -104,12 +105,13 @@ class GameStateBuilder:
     def _build_interaction_state(self) -> Dict[str, Any]:
         """Build interaction state"""
         interaction = self.world.current_interaction
+        current_node = interaction.sequence.current_node
         return {
             'name': interaction.name,
             'is_talking': interaction.is_talking,
             'waiting_for_response': interaction.waiting_for_response,
             'sequence_state': {
-                'current_state_id': interaction.sequence.current_state_id,
+                'node_type': current_node.__class__.__name__ if current_node else None,
                 'responses': interaction.sequence.responses
             }
         }
@@ -267,9 +269,9 @@ class InteractionHandler:
         
         if current_npc and current_npc.waiting_for_response:
             waiting_for_input = True
-            current_state = current_npc.get_current_state()
-            if current_state and current_state.type == "choice" and current_state.choices:
-                choices = [choice['choice_text'] for choice in current_state.choices]
+            current_node = current_npc.get_current_node()
+            if current_node and isinstance(current_node, ChoiceNode) and current_node.choices:
+                choices = [choice['choice_text'] for choice in current_node.choices]
         
         return {
             'success': result,

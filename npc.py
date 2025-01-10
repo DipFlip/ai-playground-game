@@ -5,7 +5,7 @@ import os
 from dataclasses import dataclass
 import random
 import time
-from sequence import Sequence, State
+from sequence import Sequence, Node
 
 class NPC(Character):
     @classmethod
@@ -63,9 +63,9 @@ class NPC(Character):
         """Proxy to sequence's waiting_for_response"""
         return self.sequence.waiting_for_response
 
-    def get_current_state(self) -> Optional[State]:
-        """Proxy to sequence's get_current_state"""
-        return self.sequence.get_current_state()
+    def get_current_node(self) -> Optional[Node]:
+        """Get the current node in the sequence"""
+        return self.sequence.current_node
 
     def provide_response(self, response: str, character: Character = None) -> None:
         """Handle a response from the player"""
