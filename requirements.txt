@@ -3,3 +3,5 @@ Pillow
 pyyaml
 python-dotenv
 openai
+pytest
+pytest-cov
