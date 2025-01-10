@@ -7,6 +7,8 @@ import yaml
 import uuid
 import json
 import logging
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Any, Union
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -15,61 +17,105 @@ logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
 app = Flask(__name__)
 
-def load_state_from_request():
-    """Load state from request data if it exists"""
-    if request.is_json and request.json.get('savedState'):
-        saved_state = request.json['savedState']
-        if saved_state.get('player'):
-            player_state = saved_state['player']
-            PLAYER_STATE.update(player_state)
-            # Sync game world character position with saved state
-            game_world.character.x = player_state['x']
-            game_world.character.y = player_state['y']
-            
-        if saved_state.get('npcPositions'):
-            NPC_POSITIONS.update(saved_state['npcPositions'])
-            # Sync NPC positions with saved state
-            for location in game_world.locations:
-                if isinstance(location, NPC):
-                    npc_id = next((id for id, pos in saved_state['npcPositions'].items() 
-                                 if (isinstance(id, str) and id.startswith('dynamic_') and location.name == f'dynamic_{id.split("_")[1]}') 
-                                 or (location.name == id.replace('.yaml', ''))), None)
-                    if npc_id and npc_id in saved_state['npcPositions']:
-                        location.x = saved_state['npcPositions'][npc_id]['x']
-                        location.y = saved_state['npcPositions'][npc_id]['y']
-            
-        if saved_state.get('dynamicNpcs'):
+@dataclass
+class GameState:
+    """Class to manage game state"""
+    player: Dict[str, Any]
+    npc_positions: Dict[str, Dict[str, int]]
+    dynamic_npcs: List[Dict[str, Any]]
+    interaction: Optional[Dict[str, Any]] = None
+
+    @classmethod
+    def from_request(cls, request_data: Dict[str, Any]) -> Optional['GameState']:
+        """Create GameState from request data"""
+        if not request_data.get('savedState'):
+            return None
+        
+        saved_state = request_data['savedState']
+        return cls(
+            player=saved_state.get('player', {}),
+            npc_positions=saved_state.get('npcPositions', {}),
+            dynamic_npcs=saved_state.get('dynamicNpcs', []),
+            interaction=saved_state.get('interaction')
+        )
+
+    def apply_to_world(self, world: World) -> None:
+        """Apply state to game world"""
+        if self.player:
+            PLAYER_STATE.update(self.player)
+            world.character.x = self.player['x']
+            world.character.y = self.player['y']
+        
+        if self.npc_positions:
+            NPC_POSITIONS.update(self.npc_positions)
+            self._sync_npc_positions(world)
+        
+        if self.dynamic_npcs:
             DYNAMIC_NPCS.clear()
-            DYNAMIC_NPCS.extend(saved_state['dynamicNpcs'])
-        if saved_state.get('interaction'):
-            return saved_state['interaction']
-    return None
+            DYNAMIC_NPCS.extend(self.dynamic_npcs)
 
-def create_state_response(response_data):
-    """Add current state to response data"""
-    game_state = {
-        'player': {
-            'x': game_world.character.x,
-            'y': game_world.character.y,
-            'inventory': game_world.character.inventory
-        },
-        'npcPositions': NPC_POSITIONS,
-        'dynamicNpcs': DYNAMIC_NPCS,
-    }
+    def _sync_npc_positions(self, world: World) -> None:
+        """Sync NPC positions with saved state"""
+        for location in world.locations:
+            if not isinstance(location, NPC):
+                continue
+            
+            npc_id = self._find_npc_id(location)
+            if npc_id and npc_id in self.npc_positions:
+                location.x = self.npc_positions[npc_id]['x']
+                location.y = self.npc_positions[npc_id]['y']
 
-    # Add interaction state if there is one
-    if game_world.current_interaction:
-        game_state['interaction'] = {
-            'name': game_world.current_interaction.name,
-            'is_talking': game_world.current_interaction.is_talking,
-            'waiting_for_response': game_world.current_interaction.waiting_for_response,
+    def _find_npc_id(self, npc: NPC) -> Optional[str]:
+        """Find NPC ID in positions"""
+        return next((
+            id for id in self.npc_positions.keys()
+            if (isinstance(id, str) and id.startswith('dynamic_') and npc.name == f'dynamic_{id.split("_")[1]}')
+            or (npc.name == id.replace('.yaml', ''))
+        ), None)
+
+class GameStateBuilder:
+    """Builder for game state responses"""
+    def __init__(self, world: World):
+        self.world = world
+
+    def build_state(self) -> Dict[str, Any]:
+        """Build current game state"""
+        state = {
+            'player': self._build_player_state(),
+            'npcPositions': NPC_POSITIONS,
+            'dynamicNpcs': DYNAMIC_NPCS,
+        }
+
+        if self.world.current_interaction:
+            state['interaction'] = self._build_interaction_state()
+
+        return state
+
+    def _build_player_state(self) -> Dict[str, Any]:
+        """Build player state"""
+        return {
+            'x': self.world.character.x,
+            'y': self.world.character.y,
+            'inventory': self.world.character.inventory
+        }
+
+    def _build_interaction_state(self) -> Dict[str, Any]:
+        """Build interaction state"""
+        interaction = self.world.current_interaction
+        return {
+            'name': interaction.name,
+            'is_talking': interaction.is_talking,
+            'waiting_for_response': interaction.waiting_for_response,
             'sequence_state': {
-                'current_state_id': game_world.current_interaction.sequence.current_state_id,
-                'responses': game_world.current_interaction.sequence.responses
+                'current_state_id': interaction.sequence.current_state_id,
+                'responses': interaction.sequence.responses
             }
         }
 
-    response_data['gameState'] = game_state
+def create_state_response(world: World, response_data: Dict[str, Any]) -> Any:
+    """Create response with current game state"""
+    state_builder = GameStateBuilder(world)
+    response_data['gameState'] = state_builder.build_state()
     return jsonify(response_data)
 
 # Create a global world instance
@@ -85,12 +131,13 @@ def home():
 
 @app.route('/move', methods=['POST'])
 def move():
-    # Load saved state if it exists
-    load_state_from_request()
+    # Load and apply saved state
+    if state := GameState.from_request(request.json):
+        state.apply_to_world(game_world)
     
     # Don't allow movement during interaction
     if game_world.is_interaction_active():
-        return create_state_response({
+        return create_state_response(game_world, {
             'x': game_world.character.x,
             'y': game_world.character.y,
             'inventory': game_world.character.inventory,
@@ -98,6 +145,7 @@ def move():
             'canMove': False
         })
 
+    # Process movement
     direction = request.json['direction']
     dx, dy = {
         'north': (0, -1),
@@ -106,15 +154,13 @@ def move():
         'west': (-1, 0)
     }[direction]
     
-    # Calculate new position
     new_x = game_world.character.x + dx
     new_y = game_world.character.y + dy
     
-    # Check if movement is allowed
     if game_world.can_move_to(new_x, new_y):
         game_world.character.move(dx, dy)
     
-    return create_state_response({
+    return create_state_response(game_world, {
         'x': game_world.character.x,
         'y': game_world.character.y,
         'inventory': game_world.character.inventory,
@@ -124,36 +170,15 @@ def move():
 
 @app.route('/game_state', methods=['GET', 'POST'])
 def game_state():
-    # Load all state from the request
-    if request.is_json and request.json.get('savedState'):
-        saved_state = request.json['savedState']
-        if saved_state.get('player'):
-            player_state = saved_state['player']
-            PLAYER_STATE.update(player_state)
-            # Sync game world character position with saved state
-            game_world.character.x = player_state['x']
-            game_world.character.y = player_state['y']
-            
-        if saved_state.get('npcPositions'):
-            NPC_POSITIONS.update(saved_state['npcPositions'])
-            # Sync NPC positions with saved state
-            for location in game_world.locations:
-                if isinstance(location, NPC):
-                    npc_id = next((id for id, pos in saved_state['npcPositions'].items() 
-                                 if (isinstance(id, str) and id.startswith('dynamic_') and location.name == f'dynamic_{id.split("_")[1]}') 
-                                 or (location.name == id.replace('.yaml', ''))), None)
-                    if npc_id and npc_id in saved_state['npcPositions']:
-                        location.x = saved_state['npcPositions'][npc_id]['x']
-                        location.y = saved_state['npcPositions'][npc_id]['y']
-                        
-        if saved_state.get('dynamicNpcs'):
-            DYNAMIC_NPCS.clear()
-            DYNAMIC_NPCS.extend(saved_state['dynamicNpcs'])
+    # Load and apply saved state
+    if request.is_json:
+        if state := GameState.from_request(request.json):
+            state.apply_to_world(game_world)
     
     # Update NPCs
-    game_world.update_npcs()  # Update world state including NPC movements
+    game_world.update_npcs()
     
-    return create_state_response({
+    return create_state_response(game_world, {
         'character': {
             'x': game_world.character.x,
             'y': game_world.character.y,
@@ -183,115 +208,121 @@ def serve_static(filename):
     base_path = os.path.dirname(os.path.abspath(__file__))
     return send_file(os.path.join(base_path, 'static', filename))
 
+class InteractionHandler:
+    """Handler for NPC interactions"""
+    def __init__(self, world: World, messages: List[str]):
+        self.world = world
+        self.messages = messages
+
+    def handle_interaction(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle an interaction request"""
+        # Capture print output
+        import io
+        import sys
+        old_stdout = sys.stdout
+        sys.stdout = output = io.StringIO()
+
+        if 'answer' in request_data:
+            self._process_answer(request_data['answer'])
+
+        result = self.world.try_interact()
+        
+        # Get the printed message
+        sys.stdout = old_stdout
+        message = output.getvalue().strip()
+        
+        current_npc = self.world.current_interaction
+        self._update_messages(message, current_npc)
+        
+        return self._create_response(result, message, current_npc)
+
+    def _process_answer(self, answer: Union[str, Dict[str, str]]) -> None:
+        """Process player's answer"""
+        npc = self.world.current_interaction
+        if not npc:
+            return
+
+        # Extract text from answer if it's a dict
+        if isinstance(answer, dict) and 'text' in answer:
+            answer = answer['text']
+        npc.provide_response(answer, self.world.character)
+
+    def _update_messages(self, message: str, current_npc: Optional[NPC]) -> None:
+        """Update game messages"""
+        if message:
+            self.messages.append(message)
+            if len(self.messages) > 5:
+                self.messages.pop(0)
+        
+        # Clear messages if interaction is over
+        if not current_npc or not current_npc.is_talking:
+            self.messages.clear()
+
+    def _create_response(self, result: bool, message: str, current_npc: Optional[NPC]) -> Dict[str, Any]:
+        """Create interaction response"""
+        waiting_for_input = False
+        choices = []
+        
+        if current_npc and current_npc.waiting_for_response:
+            waiting_for_input = True
+            current_state = current_npc.get_current_state()
+            if current_state and current_state.type == "choice" and current_state.choices:
+                choices = [choice['choice_text'] for choice in current_state.choices]
+        
+        return {
+            'success': result,
+            'message': message,
+            'inventory': self.world.character.inventory,
+            'messages': self.messages,
+            'waitingForInput': waiting_for_input,
+            'choices': choices,
+            'is_talking': current_npc.is_talking if current_npc else False
+        }
+
 @app.route('/interact', methods=['POST'])
 def interact():
-    # Load saved state if it exists
-    load_state_from_request()
+    # Load and apply saved state
+    if state := GameState.from_request(request.json):
+        state.apply_to_world(game_world)
     
-    # Capture print output
-    import io
-    import sys
-    old_stdout = sys.stdout
-    sys.stdout = output = io.StringIO()
+    # Handle interaction
+    handler = InteractionHandler(game_world, game_messages)
+    response = handler.handle_interaction(request.json)
     
-    # Check if we're providing an answer
-    if 'answer' in request.json:
-        npc = game_world.current_interaction
-        if npc:
-            # Extract just the text value from the answer
-            answer = request.json['answer']
-            if isinstance(answer, dict) and 'text' in answer:
-                answer = answer['text']
-            npc.provide_response(answer, game_world.character)
-    
-    result = game_world.try_interact()
-    
-    # Get the printed message
-    sys.stdout = old_stdout
-    message = output.getvalue().strip()
-    
-    # Get current NPC before updating messages
-    current_npc = game_world.current_interaction
-    
-    if message:
-        game_messages.append(message)
-        # Keep only last 5 messages
-        if len(game_messages) > 5:
-            game_messages.pop(0)
-    
-    # Clear messages if interaction is completely over
-    if not current_npc or not current_npc.is_talking:
-        game_messages.clear()
-    
-    # Check if NPC is waiting for input
-    waiting_for_input = False
-    choices = []
-    if current_npc and current_npc.waiting_for_response:
-        waiting_for_input = True
-        current_state = current_npc.get_current_state()
-        if current_state and current_state.type == "choice" and current_state.choices:
-            choices = [choice['choice_text'] for choice in current_state.choices]
-    
-    return create_state_response({
-        'success': result,
-        'message': message,
-        'inventory': game_world.character.inventory,
-        'messages': game_messages,
-        'waitingForInput': waiting_for_input,
-        'choices': choices,
-        'is_talking': current_npc.is_talking if current_npc else False
-    })
+    return create_state_response(game_world, response)
 
 @app.route('/create_npc', methods=['POST'])
 def create_npc():
     try:
         description = request.json['description']
+        npc_data = create_character(description)
         
-        # Generate NPC YAML using character_generator
-        yaml_content = create_character(description)
+        # Generate unique ID for the NPC
+        npc_id = str(uuid.uuid4())
+        npc_filename = f'dynamic_{npc_id}.yaml'
         
-        if not yaml_content:
-            return jsonify({'success': False, 'error': 'Failed to generate NPC'})
+        # Save NPC data
+        npc_path = os.path.join('npcs', npc_filename)
+        with open(npc_path, 'w') as f:
+            yaml.dump(npc_data, f)
         
-        # Parse the YAML content
-        npc_data = yaml.safe_load(yaml_content)
+        # Add to dynamic NPCs list
+        DYNAMIC_NPCS.append({
+            'id': npc_id,
+            'x': request.json.get('x', 0),
+            'y': request.json.get('y', 0)
+        })
         
-        # Add to in-memory storage
-        DYNAMIC_NPCS.append(npc_data)
-        
-        # Reload the world to include the new NPC
-        global game_world
-        game_world = World()
-        
-        return create_state_response({'success': True})
-        
+        return jsonify({'success': True, 'message': 'NPC created successfully'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        logging.error(f"Error creating NPC: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/reset_game', methods=['POST'])
 def reset_game():
-    """Reset all game state to initial values."""
-    try:
-        # Clear player state
-        PLAYER_STATE.update({
-            'x': 0,
-            'y': 0,
-            'inventory': {}
-        })
-        
-        # Clear NPC positions
-        NPC_POSITIONS.clear()
-        
-        # Clear dynamic NPCs
-        DYNAMIC_NPCS.clear()
-        
-        # Reinitialize the game world
-        global game_world
-        game_world = World()
-        
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+    game_world.reset()
+    game_messages.clear()
+    return jsonify({'success': True})
 
 if __name__ == '__main__':
     app.run(debug=True) 
