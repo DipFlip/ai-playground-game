@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, send_file
+from flask import Flask, render_template, jsonify, request, send_file, session
 from world import World, DYNAMIC_NPCS, NPC_POSITIONS, PLAYER_STATE
 from npc import NPC
 import os
@@ -13,12 +13,30 @@ from sequence import ChoiceNode
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)  # Get logger for this module
+logger = logging.getLogger(__name__)
 
 # Reduce Werkzeug logger verbosity
 logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(24))  # Required for sessions
+
+# Dictionary to store game worlds for each session
+game_worlds = {}
+game_messages = {}
+
+def get_player_world():
+    """Get or create a game world for the current session"""
+    session_id = session.get('session_id')
+    if not session_id:
+        session_id = str(uuid.uuid4())
+        session['session_id'] = session_id
+    
+    if session_id not in game_worlds:
+        game_worlds[session_id] = World()
+        game_messages[session_id] = []
+    
+    return game_worlds[session_id], game_messages[session_id]
 
 @dataclass
 class GameState:
@@ -122,30 +140,29 @@ def create_state_response(world: World, response_data: Dict[str, Any]) -> Any:
     response_data['gameState'] = state_builder.build_state()
     return jsonify(response_data)
 
-# Create a global world instance
-game_world = World()
-game_messages = []
-
 @app.route('/')
 def home():
+    world, messages = get_player_world()
     return render_template('game.html', 
-                         character=game_world.character,
-                         locations=game_world.locations,
-                         messages=game_messages)
+                         character=world.character,
+                         locations=world.locations,
+                         messages=messages)
 
 @app.route('/move', methods=['POST'])
 def move():
+    world, _ = get_player_world()
+    
     # Load and apply saved state
     if state := GameState.from_request(request.json):
-        state.apply_to_world(game_world)
+        state.apply_to_world(world)
     
     # Don't allow movement during interaction
-    if game_world.is_interaction_active():
-        return create_state_response(game_world, {
-            'x': game_world.character.x,
-            'y': game_world.character.y,
-            'inventory': game_world.character.inventory,
-            'emoji': game_world.character.emoji,
+    if world.is_interaction_active():
+        return create_state_response(world, {
+            'x': world.character.x,
+            'y': world.character.y,
+            'inventory': world.character.inventory,
+            'emoji': world.character.emoji,
             'canMove': False
         })
 
@@ -158,35 +175,37 @@ def move():
         'west': (-1, 0)
     }[direction]
     
-    new_x = game_world.character.x + dx
-    new_y = game_world.character.y + dy
+    new_x = world.character.x + dx
+    new_y = world.character.y + dy
     
-    if game_world.can_move_to(new_x, new_y):
-        game_world.character.move(dx, dy)
+    if world.can_move_to(new_x, new_y):
+        world.character.move(dx, dy)
     
-    return create_state_response(game_world, {
-        'x': game_world.character.x,
-        'y': game_world.character.y,
-        'inventory': game_world.character.inventory,
-        'emoji': game_world.character.emoji,
+    return create_state_response(world, {
+        'x': world.character.x,
+        'y': world.character.y,
+        'inventory': world.character.inventory,
+        'emoji': world.character.emoji,
         'canMove': True
     })
 
 @app.route('/game_state', methods=['GET', 'POST'])
 def game_state():
+    world, _ = get_player_world()
+    
     # Load and apply saved state
     if request.is_json:
         if state := GameState.from_request(request.json):
-            state.apply_to_world(game_world)
+            state.apply_to_world(world)
     
     # Update NPCs
-    game_world.update_npcs()
+    world.update_npcs()
     
-    return create_state_response(game_world, {
+    return create_state_response(world, {
         'character': {
-            'x': game_world.character.x,
-            'y': game_world.character.y,
-            'emoji': game_world.character.emoji
+            'x': world.character.x,
+            'y': world.character.y,
+            'emoji': world.character.emoji
         },
         'locations': [{
             'x': loc.x,
@@ -194,7 +213,7 @@ def game_state():
             'emoji': loc.emoji,
             'type': loc.__class__.__name__,
             'name': getattr(loc, 'name', None)
-        } for loc in game_world.locations]
+        } for loc in world.locations]
     })
 
 @app.route('/graphics/<path:filename>')
@@ -285,18 +304,19 @@ class InteractionHandler:
 
 @app.route('/interact', methods=['POST'])
 def interact():
+    world, messages = get_player_world()
+    
     # Load and apply saved state
     if state := GameState.from_request(request.json):
-        state.apply_to_world(game_world)
+        state.apply_to_world(world)
     
-    # Handle interaction
-    handler = InteractionHandler(game_world, game_messages)
+    handler = InteractionHandler(world, messages)
     response = handler.handle_interaction(request.json)
-    
-    return create_state_response(game_world, response)
+    return create_state_response(world, response)
 
 @app.route('/create_npc', methods=['POST'])
 def create_npc():
+    world, _ = get_player_world()
     try:
         description = request.json['description']
         # Create the NPC data
@@ -332,7 +352,7 @@ def create_npc():
         logger.debug(f"Created NPC with data: {dynamic_npc}")
         
         # Reload the world to include the new NPC
-        game_world.reload_npcs()
+        world.reload_npcs()
         
         return jsonify({
             'success': True, 
@@ -351,9 +371,19 @@ def create_npc():
 
 @app.route('/reset_game', methods=['POST'])
 def reset_game():
-    game_world.reset()
-    game_messages.clear()
-    return jsonify({'success': True})
+    session_id = session.get('session_id')
+    if session_id:
+        if session_id in game_worlds:
+            del game_worlds[session_id]
+        if session_id in game_messages:
+            del game_messages[session_id]
+    return jsonify({'status': 'success'})
+
+# Cleanup function to remove inactive sessions periodically
+def cleanup_inactive_sessions():
+    """Remove game worlds for sessions that haven't been active for a while"""
+    # This could be implemented with a timestamp-based cleanup mechanism
+    pass
 
 if __name__ == '__main__':
     app.run(debug=True) 
