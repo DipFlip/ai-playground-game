@@ -398,8 +398,8 @@ body {
     }
 
     .movement-controls {
-        width: 280px;
-        gap: 12px;
+        width: 300px;
+        gap: 15px;
         margin: 20px 0;
     }
 
@@ -434,17 +434,27 @@ body {
 
     .control-button {
         width: 100%;
-        padding: 12px 20px;
-        font-size: 1.1rem;
+        padding: 15px 25px;
+        font-size: 1.2rem;
     }
 
     #add-npc-button {
-        padding: 12px 20px;
-        font-size: 1.1rem;
+        padding: 15px 25px;
+        font-size: 1.2rem;
     }
 
     .movement-controls button {
-        padding: 20px;
+        padding: 25px;
+        font-size: 1.3rem;
+    }
+
+    #submit-answer {
+        padding: 12px 20px;
+        font-size: 1.2rem;
+    }
+
+    .choice-button {
+        padding: 12px 15px 12px 35px;
         font-size: 1.2rem;
     }
 }
@@ -465,23 +475,23 @@ body {
     }
 
     .choice-button {
-        font-size: 1rem;
-        padding: 6px 12px 6px 25px;
+        font-size: 1.15rem;
+        padding: 10px 15px 10px 30px;
     }
 
     .choice-button.selected::before {
-        left: 8px;
-        font-size: 1rem;
+        left: 10px;
+        font-size: 1.15rem;
     }
 
     .movement-controls {
-        width: 250px;
-        gap: 10px;
+        width: 280px;
+        gap: 12px;
     }
 
     .movement-controls button {
-        padding: 18px;
-        font-size: 1.15rem;
+        padding: 22px;
+        font-size: 1.25rem;
     }
 }
 
