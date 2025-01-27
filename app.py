@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Any, Union
 from sequence import ChoiceNode
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Reduce Werkzeug logger verbosity

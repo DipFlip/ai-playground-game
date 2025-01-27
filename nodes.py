@@ -7,6 +7,7 @@ import logging
 from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 class Node(ABC):
     def __init__(self, text: str = None):
